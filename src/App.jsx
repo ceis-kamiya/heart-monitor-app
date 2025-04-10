@@ -3,58 +3,22 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 
-// 表示期間（秒）
 const DISPLAY_SECONDS = 60;
 
-// CustomTooltipコンポーネントを修正
-const CustomTooltip = ({ active, payload, label }) => {
-  if (active && payload && payload.length) {
-    // デバッグ用にpayloadを確認
-    console.log('Tooltip payload:', payload);
-
-    // データポイントを見つける
-    const dataPoint = displayData.find(d => d.timeValue === label);
-    if (!dataPoint) return null;
-
-    return (
-      <div style={{ backgroundColor: 'white', border: '1px solid #ccc', padding: '10px', borderRadius: '5px' }}>
-        <p style={{ margin: 0, fontWeight: 'bold' }}>{dataPoint.displayTime}</p>
-        <p style={{ margin: 0, color: '#8884d8' }}>
-          心拍数: {dataPoint.heartRate} bpm
-        </p>
-        <p style={{ margin: 0, color: '#82ca9d' }}>
-          加速度: {dataPoint.acceleration} G
-        </p>
-      </div>
-    );
-  }
-  return null;
-};
-
 function App() {
-  const [data, setData] = useState([]);           // 全データ保持（最大300件）
-
-  // アラート条件
+  const [data, setData] = useState([]);
   const [hrThreshold, setHrThreshold] = useState(100);
   const [accThreshold, setAccThreshold] = useState(1.0);
-  const [duration, setDuration] = useState(3);      // 条件継続秒数
-
-  // 表示開始時刻（Unix秒：ライブ/手動モードで利用）
+  const [duration, setDuration] = useState(3);
   const [startTime, setStartTime] = useState(0);
-  const [liveMode, setLiveMode] = useState(true);   // ライブモードなら常に最新60秒を表示
-
-  // アラート履歴（連続するアラートは 1 件にまとめる）
-  // 各要素は { start: globalIdx, end: globalIdx }
+  const [liveMode, setLiveMode] = useState(true);
   const [alertRanges, setAlertRanges] = useState([]);
   const [alertActive, setAlertActive] = useState(false);
 
   const audioRef = useRef(null);
-
-  // リアルタイムデータ生成用の参照（滑らかな変動用）
   const hrRef = useRef(90);
   const accRef = useRef(1.0);
 
-  // 新しいデータを1秒ごとに追加（timeValue はUnix秒）
   useEffect(() => {
     const interval = setInterval(() => {
       let hr = hrRef.current + (Math.random() * 10 - 5);
@@ -85,7 +49,6 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // アラート判定＆履歴更新（直近duration秒間のデータが条件を満たすか）
   useEffect(() => {
     if (data.length < duration) return;
 
@@ -109,7 +72,6 @@ function App() {
     setAlertActive(nowAlert);
   }, [data, hrThreshold, accThreshold, duration]);
 
-  // ライブモードの場合は表示ウィンドウの開始時刻を自動更新
   useEffect(() => {
     if (liveMode && data.length > 0) {
       const currentTime = data[data.length - 1].timeValue;
@@ -117,22 +79,12 @@ function App() {
     }
   }, [data, liveMode]);
 
-  // 表示ウィンドウのドメイン
   const xDomain = [startTime, startTime + DISPLAY_SECONDS];
-
-  // 指定された時刻範囲に含まれるデータを抽出
   const displayData = data.filter(d => d.timeValue >= xDomain[0] && d.timeValue <= xDomain[1]);
-
-  // スライダー用：最小はデータ最初のtimeValue、最大は (最新のtimeValue - DISPLAY_SECONDS)
   const sliderMin = data.length > 0 ? data[0].timeValue : 0;
   const sliderMax = data.length > 0 ? data[data.length - 1].timeValue - DISPLAY_SECONDS : 0;
+  const formatTime = (timeValue) => new Date(timeValue * 1000).toLocaleTimeString();
 
-  // 時刻表示変換（Unix秒 → hh:mm:ss）
-  const formatTime = (timeValue) => {
-    return new Date(timeValue * 1000).toLocaleTimeString();
-  };
-
-  // アラート部分の赤色オーバーレイ（heartRate）
   const alertLinesHR = alertRanges.map((range, idx) => {
     const startT = data[range.start]?.timeValue;
     const endT = data[range.end]?.timeValue;
@@ -150,11 +102,11 @@ function App() {
         dot={false}
         isAnimationActive={false}
         legendType="none"
+        tooltipType="none"
       />
     ) : null;
   }).filter(line => line !== null);
 
-  // アラート部分の赤色オーバーレイ（acceleration）
   const alertLinesAcc = alertRanges.map((range, idx) => {
     const startT = data[range.start]?.timeValue;
     const endT = data[range.end]?.timeValue;
@@ -172,15 +124,17 @@ function App() {
         dot={false}
         isAnimationActive={false}
         legendType="none"
+        tooltipType="none"
       />
     ) : null;
   }).filter(line => line !== null);
+
+  const latest = data.at(-1);
 
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
       <h2>💓 心拍 & 加速度モニタリング</h2>
 
-      {/* アラート条件設定 */}
       <div style={{ marginBottom: '10px' }}>
         <label>心拍しきい値：
           <input type="number" value={hrThreshold} onChange={e => setHrThreshold(Number(e.target.value))} />
@@ -193,7 +147,6 @@ function App() {
         </label>
       </div>
 
-      {/* ライブモード切替 */}
       <div style={{ marginBottom: '10px' }}>
         <label>
           <input type="checkbox" checked={liveMode} onChange={e => setLiveMode(e.target.checked)} />
@@ -201,7 +154,6 @@ function App() {
         </label>
       </div>
 
-      {/* 手動モードの場合、スライダーで表示開始時刻を選択 */}
       {!liveMode && (
         <div style={{ marginBottom: '10px' }}>
           表示開始時刻：
@@ -217,7 +169,6 @@ function App() {
         </div>
       )}
 
-      {/* グラフ表示 */}
       <ResponsiveContainer width="100%" height={400}>
         <LineChart
           data={displayData}
@@ -233,19 +184,15 @@ function App() {
           />
           <YAxis yAxisId="left" domain={[30, 220]} />
           <YAxis yAxisId="right" orientation="right" domain={[0, 3]} />
-          <Tooltip
-            content={<CustomTooltip />}
-            isAnimationActive={false}
-            cursor={{ stroke: '#666', strokeWidth: 1 }}
-          />
+          <Tooltip content={() => null} cursor={false} />
           <Legend />
-          {/* 通常のライン */}
           <Line
             yAxisId="left"
             type="monotone"
             dataKey="heartRate"
             stroke="#8884d8"
-            dot={false}
+            dot={{ r: 0 }}
+            activeDot={false}
             isAnimationActive={false}
           />
           <Line
@@ -253,16 +200,24 @@ function App() {
             type="monotone"
             dataKey="acceleration"
             stroke="#82ca9d"
-            dot={false}
+            dot={{ r: 0 }}
+            activeDot={false}
             isAnimationActive={false}
           />
-          {/* アラート部分の赤色オーバーレイ（心拍・加速度） */}
           {alertLinesHR}
           {alertLinesAcc}
         </LineChart>
       </ResponsiveContainer>
 
-      {/* アラート履歴表示 */}
+      {latest && (
+        <div style={{ marginTop: 10, padding: '6px 12px', background: '#f4f4f4', borderRadius: '6px' }}>
+          <strong>📍 最新のデータ</strong><br />
+          🕒 {latest.displayTime} &nbsp;&nbsp;
+          💓 心拍数: {latest.heartRate} bpm &nbsp;&nbsp;
+          🌀 加速度: {latest.acceleration} G
+        </div>
+      )}
+
       <div style={{ marginTop: '30px' }}>
         <h4>📜 アラート履歴</h4>
         {alertRanges.length === 0 ? (
