@@ -18,6 +18,8 @@ function App() {
   const audioRef = useRef(null);
   const hrRef = useRef(90);
   const accRef = useRef(1.0);
+  // useRef を使って alertActive の即時参照を可能にする
+  const alertActiveRef = useRef(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -58,10 +60,11 @@ function App() {
     const accLow = slice.every(d => d.acceleration <= accThreshold);
     const nowAlert = hrHigh && accLow;
 
-    if (nowAlert && !alertActive) {
+    // useRef を使って直近の alertActive 状態を即座に参照
+    if (nowAlert && !alertActiveRef.current) {
       setAlertRanges(prev => [...prev, { start: i, end: i }]);
       if (audioRef.current) audioRef.current.play();
-    } else if (nowAlert && alertActive) {
+    } else if (nowAlert && alertActiveRef.current) {
       setAlertRanges(prev => {
         const updated = [...prev];
         updated[updated.length - 1].end = i;
@@ -69,6 +72,8 @@ function App() {
       });
     }
 
+    // useRef と state の両方を更新
+    alertActiveRef.current = nowAlert;
     setAlertActive(nowAlert);
   }, [data, hrThreshold, accThreshold, duration]);
 
@@ -136,13 +141,16 @@ function App() {
       <h2>💓 心拍 & 加速度モニタリング</h2>
 
       <div style={{ marginBottom: '10px' }}>
-        <label>心拍しきい値：
+        <label>
+          心拍しきい値：
           <input type="number" value={hrThreshold} onChange={e => setHrThreshold(Number(e.target.value))} />
         </label>
-        <label style={{ marginLeft: '20px' }}>加速度しきい値：
+        <label style={{ marginLeft: '20px' }}>
+          加速度しきい値：
           <input type="number" value={accThreshold} step="0.1" onChange={e => setAccThreshold(Number(e.target.value))} />
         </label>
-        <label style={{ marginLeft: '20px' }}>継続秒数：
+        <label style={{ marginLeft: '20px' }}>
+          継続秒数：
           <input type="number" value={duration} onChange={e => setDuration(Number(e.target.value))} />
         </label>
       </div>
@@ -150,7 +158,7 @@ function App() {
       <div style={{ marginBottom: '10px' }}>
         <label>
           <input type="checkbox" checked={liveMode} onChange={e => setLiveMode(e.target.checked)} />
-          常に最新の{DISPLAY_SECONDS}秒を表示（ライブモード）
+          常に最新の {DISPLAY_SECONDS} 秒を表示（ライブモード）
         </label>
       </div>
 
@@ -233,7 +241,7 @@ function App() {
             }}>
               <strong>🚨 {data[range.start]?.displayTime} 〜 {data[range.end]?.displayTime}</strong>
               <br />
-              心拍 > {hrThreshold} &amp; 加速度 ≤ {accThreshold} が {range.end - range.start + 1}秒継続
+              心拍 &gt; {hrThreshold} &amp; 加速度 ≤ {accThreshold} が {range.end - range.start + 1} 秒継続
             </div>
           ))
         )}

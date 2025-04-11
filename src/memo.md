@@ -3,6 +3,9 @@ git add .
 git commit -m "コメント"
 git push
 
+## 最新のコミット状態に復元
+git restore src/App.jsx
+
 ## デプロイ（GitHub Pages）
 npm run build
 npm run deploy
