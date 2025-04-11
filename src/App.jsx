@@ -9,7 +9,7 @@ function App() {
   const [data, setData] = useState([]);
   const [hrThreshold, setHrThreshold] = useState(80);
   const [accThreshold, setAccThreshold] = useState(1.0);
-  const [duration, setDuration] = useState(3);
+  const [duration, setDuration] = useState(3); // ここを60や600に変更すれば連続時間が長くなる前提で判定可能
   const [startTime, setStartTime] = useState(0);
   const [liveMode, setLiveMode] = useState(true);
   const [alertRanges, setAlertRanges] = useState([]);
@@ -18,7 +18,10 @@ function App() {
   const audioRef = useRef(null);
   const hrRef = useRef(90);
   const accRef = useRef(1.0);
+  // alert開始のシステム時刻を保持する ref
+  const alertStartRef = useRef(null);
 
+  // 毎秒疑似データ生成
   useEffect(() => {
     const interval = setInterval(() => {
       let hr = hrRef.current + (Math.random() * 10 - 5);
@@ -31,7 +34,7 @@ function App() {
       accRef.current = acc;
 
       const now = new Date();
-      const timeValue = now.getTime() / 1000;
+      const timeValue = now.getTime() / 1000; // 秒単位のシステム時刻
       const displayTime = now.toLocaleTimeString();
 
       setData(prev => {
@@ -49,46 +52,45 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
+  // アラート判定：システム時刻に基づいて連続性を測定する
   useEffect(() => {
     if (data.length === 0) return;
-
     const latest = data[data.length - 1];
-    let continuousSeconds = 0;
-    let isAlertNow = false;
+    // 最新サンプルの条件判定（参考値として）; 毎回のサンプルが閾値を満たしているか確認
+    const conditionMet = latest.heartRate >= hrThreshold && latest.acceleration <= accThreshold;
+    const currentTime = Date.now() / 1000; // 現在のシステム時刻（秒）
 
-    for (let i = data.length - 1; i >= 0; i--) {
-      const d = data[i];
-      const meetsCondition = (d.heartRate >= hrThreshold && d.acceleration <= accThreshold);
-
-      if (meetsCondition) {
-        continuousSeconds = latest.timeValue - d.timeValue;
-        if (continuousSeconds >= duration) {
-          isAlertNow = true;
-          break;
-        }
-      } else {
-        break;
-      }
-    }
-
-    if (isAlertNow) {
-      if (!alertActive) {
-        const alertStartTime = latest.timeValue - continuousSeconds;
-        setAlertRanges(prev => [...prev, { start: alertStartTime, end: latest.timeValue }]);
-        if (audioRef.current) audioRef.current.play();
-        setAlertActive(true);
-      } else {
+    if (conditionMet) {
+      if (alertActive) {
+        // 既にアラートが発動中なら、終了時刻を更新
         setAlertRanges(prev => {
           const updated = [...prev];
-          updated[updated.length - 1].end = latest.timeValue;
+          updated[updated.length - 1].end = currentTime;
           return updated;
         });
+      } else {
+        // アラートはまだ発動していない。alertStartRef に開始時刻が未設定なら設定する
+        if (!alertStartRef.current) {
+          alertStartRef.current = currentTime;
+        }
+        // 連続経過時間が duration 以上かチェック
+        if (currentTime - alertStartRef.current >= duration) {
+          // 連続して条件が満たされているならアラート開始
+          setAlertRanges(prev => [...prev, { start: alertStartRef.current, end: currentTime }]);
+          if (audioRef.current) audioRef.current.play();
+          setAlertActive(true);
+        }
       }
-    } else if (alertActive) {
-      setAlertActive(false);
+    } else {
+      // 条件を満たさない場合は、alert開始タイミングをリセットし、アラートが発動中なら終了させる
+      alertStartRef.current = null;
+      if (alertActive) {
+        setAlertActive(false);
+      }
     }
-  }, [data, hrThreshold, accThreshold, duration]);
+  }, [data, hrThreshold, accThreshold, duration, alertActive]);
 
+  // ライブモード：最新 DISPLAY_SECONDS 秒のみ表示
   useEffect(() => {
     if (liveMode && data.length > 0) {
       const currentTime = data[data.length - 1].timeValue;
@@ -102,10 +104,12 @@ function App() {
   const sliderMax = data.length > 0 ? data[data.length - 1].timeValue - DISPLAY_SECONDS : 0;
   const formatTime = (timeValue) => new Date(timeValue * 1000).toLocaleTimeString();
 
+  // グラフに描画するアラートレンジ（1秒未満は描画しない）  
   const alertLinesHR = alertRanges.map((range, idx) => {
     const { start, end } = range;
     if (end - start < 1) return null;
-    const alertData = data.filter(d => d.timeValue >= start && d.timeValue <= end && d.timeValue >= xDomain[0] && d.timeValue <= xDomain[1]);
+    const alertData = data.filter(d => d.timeValue >= start && d.timeValue <= end &&
+                                         d.timeValue >= xDomain[0] && d.timeValue <= xDomain[1]);
     return alertData.length > 1 ? (
       <Line
         key={`alert-hr-${idx}`}
@@ -126,7 +130,8 @@ function App() {
   const alertLinesAcc = alertRanges.map((range, idx) => {
     const { start, end } = range;
     if (end - start < 1) return null;
-    const alertData = data.filter(d => d.timeValue >= start && d.timeValue <= end && d.timeValue >= xDomain[0] && d.timeValue <= xDomain[1]);
+    const alertData = data.filter(d => d.timeValue >= start && d.timeValue <= end &&
+                                         d.timeValue >= xDomain[0] && d.timeValue <= xDomain[1]);
     return alertData.length > 1 ? (
       <Line
         key={`alert-acc-${idx}`}
@@ -151,13 +156,16 @@ function App() {
       <h2>💓 心拍 &amp; 加速度モニタリング</h2>
 
       <div style={{ marginBottom: '10px' }}>
-        <label>心拍しきい値：
+        <label>
+          心拍しきい値：
           <input type="number" value={hrThreshold} onChange={e => setHrThreshold(Number(e.target.value))} />
         </label>
-        <label style={{ marginLeft: '20px' }}>加速度しきい値：
+        <label style={{ marginLeft: '20px' }}>
+          加速度しきい値：
           <input type="number" value={accThreshold} step="0.1" onChange={e => setAccThreshold(Number(e.target.value))} />
         </label>
-        <label style={{ marginLeft: '20px' }}>継続秒数：
+        <label style={{ marginLeft: '20px' }}>
+          継続秒数：
           <input type="number" value={duration} onChange={e => setDuration(Number(e.target.value))} />
         </label>
       </div>
@@ -246,7 +254,9 @@ function App() {
               marginBottom: '6px',
               borderLeft: '5px solid red'
             }}>
-              <strong>🚨 {new Date(range.start * 1000).toLocaleTimeString()} 〜 {new Date(range.end * 1000).toLocaleTimeString()}</strong>
+              <strong>
+                🚨 {new Date(range.start * 1000).toLocaleTimeString()} 〜 {new Date(range.end * 1000).toLocaleTimeString()}
+              </strong>
               <br />
               心拍 ≥ {hrThreshold} &amp; 加速度 ≤ {accThreshold} が {Math.round(range.end - range.start)} 秒継続
             </div>
