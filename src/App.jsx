@@ -7,7 +7,7 @@ const DISPLAY_SECONDS = 60;
 
 function App() {
   const [data, setData] = useState([]);
-  const [hrThreshold, setHrThreshold] = useState(100);
+  const [hrThreshold, setHrThreshold] = useState(80);
   const [accThreshold, setAccThreshold] = useState(1.0);
   const [duration, setDuration] = useState(3);
   const [startTime, setStartTime] = useState(0);
@@ -18,8 +18,6 @@ function App() {
   const audioRef = useRef(null);
   const hrRef = useRef(90);
   const accRef = useRef(1.0);
-  // useRef を使って alertActive の即時参照を可能にする
-  const alertActiveRef = useRef(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -52,29 +50,43 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (data.length < duration) return;
+    if (data.length === 0) return;
 
-    const i = data.length - 1;
-    const slice = data.slice(i - duration + 1, i + 1);
-    const hrHigh = slice.every(d => d.heartRate > hrThreshold);
-    const accLow = slice.every(d => d.acceleration <= accThreshold);
-    const nowAlert = hrHigh && accLow;
+    const latest = data[data.length - 1];
+    let continuousSeconds = 0;
+    let isAlertNow = false;
 
-    // useRef を使って直近の alertActive 状態を即座に参照
-    if (nowAlert && !alertActiveRef.current) {
-      setAlertRanges(prev => [...prev, { start: i, end: i }]);
-      if (audioRef.current) audioRef.current.play();
-    } else if (nowAlert && alertActiveRef.current) {
-      setAlertRanges(prev => {
-        const updated = [...prev];
-        updated[updated.length - 1].end = i;
-        return updated;
-      });
+    for (let i = data.length - 1; i >= 0; i--) {
+      const d = data[i];
+      const meetsCondition = (d.heartRate >= hrThreshold && d.acceleration <= accThreshold);
+
+      if (meetsCondition) {
+        continuousSeconds = latest.timeValue - d.timeValue;
+        if (continuousSeconds >= duration) {
+          isAlertNow = true;
+          break;
+        }
+      } else {
+        break;
+      }
     }
 
-    // useRef と state の両方を更新
-    alertActiveRef.current = nowAlert;
-    setAlertActive(nowAlert);
+    if (isAlertNow) {
+      if (!alertActive) {
+        const alertStartTime = latest.timeValue - continuousSeconds;
+        setAlertRanges(prev => [...prev, { start: alertStartTime, end: latest.timeValue }]);
+        if (audioRef.current) audioRef.current.play();
+        setAlertActive(true);
+      } else {
+        setAlertRanges(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1].end = latest.timeValue;
+          return updated;
+        });
+      }
+    } else if (alertActive) {
+      setAlertActive(false);
+    }
   }, [data, hrThreshold, accThreshold, duration]);
 
   useEffect(() => {
@@ -91,11 +103,10 @@ function App() {
   const formatTime = (timeValue) => new Date(timeValue * 1000).toLocaleTimeString();
 
   const alertLinesHR = alertRanges.map((range, idx) => {
-    const startT = data[range.start]?.timeValue;
-    const endT = data[range.end]?.timeValue;
-    if (!startT || endT < xDomain[0] || startT > xDomain[1]) return null;
-    const alertData = data.filter(d => d.timeValue >= startT && d.timeValue <= endT && d.timeValue >= xDomain[0] && d.timeValue <= xDomain[1]);
-    return alertData.length > 0 ? (
+    const { start, end } = range;
+    if (end - start < 1) return null;
+    const alertData = data.filter(d => d.timeValue >= start && d.timeValue <= end && d.timeValue >= xDomain[0] && d.timeValue <= xDomain[1]);
+    return alertData.length > 1 ? (
       <Line
         key={`alert-hr-${idx}`}
         yAxisId="left"
@@ -113,11 +124,10 @@ function App() {
   }).filter(line => line !== null);
 
   const alertLinesAcc = alertRanges.map((range, idx) => {
-    const startT = data[range.start]?.timeValue;
-    const endT = data[range.end]?.timeValue;
-    if (!startT || endT < xDomain[0] || startT > xDomain[1]) return null;
-    const alertData = data.filter(d => d.timeValue >= startT && d.timeValue <= endT && d.timeValue >= xDomain[0] && d.timeValue <= xDomain[1]);
-    return alertData.length > 0 ? (
+    const { start, end } = range;
+    if (end - start < 1) return null;
+    const alertData = data.filter(d => d.timeValue >= start && d.timeValue <= end && d.timeValue >= xDomain[0] && d.timeValue <= xDomain[1]);
+    return alertData.length > 1 ? (
       <Line
         key={`alert-acc-${idx}`}
         yAxisId="right"
@@ -138,19 +148,16 @@ function App() {
 
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
-      <h2>💓 心拍 & 加速度モニタリング</h2>
+      <h2>💓 心拍 &amp; 加速度モニタリング</h2>
 
       <div style={{ marginBottom: '10px' }}>
-        <label>
-          心拍しきい値：
+        <label>心拍しきい値：
           <input type="number" value={hrThreshold} onChange={e => setHrThreshold(Number(e.target.value))} />
         </label>
-        <label style={{ marginLeft: '20px' }}>
-          加速度しきい値：
+        <label style={{ marginLeft: '20px' }}>加速度しきい値：
           <input type="number" value={accThreshold} step="0.1" onChange={e => setAccThreshold(Number(e.target.value))} />
         </label>
-        <label style={{ marginLeft: '20px' }}>
-          継続秒数：
+        <label style={{ marginLeft: '20px' }}>継続秒数：
           <input type="number" value={duration} onChange={e => setDuration(Number(e.target.value))} />
         </label>
       </div>
@@ -239,9 +246,9 @@ function App() {
               marginBottom: '6px',
               borderLeft: '5px solid red'
             }}>
-              <strong>🚨 {data[range.start]?.displayTime} 〜 {data[range.end]?.displayTime}</strong>
+              <strong>🚨 {new Date(range.start * 1000).toLocaleTimeString()} 〜 {new Date(range.end * 1000).toLocaleTimeString()}</strong>
               <br />
-              心拍 &gt; {hrThreshold} &amp; 加速度 ≤ {accThreshold} が {range.end - range.start + 1} 秒継続
+              心拍 ≥ {hrThreshold} &amp; 加速度 ≤ {accThreshold} が {Math.round(range.end - range.start)} 秒継続
             </div>
           ))
         )}
