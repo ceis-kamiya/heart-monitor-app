@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine
 } from 'recharts';
 
 const DISPLAY_SECONDS = 60;
@@ -109,7 +109,7 @@ function App() {
     const { start, end } = range;
     if (end - start < 1) return null;
     const alertData = data.filter(d => d.timeValue >= start && d.timeValue <= end &&
-                                         d.timeValue >= xDomain[0] && d.timeValue <= xDomain[1]);
+      d.timeValue >= xDomain[0] && d.timeValue <= xDomain[1]);
     return alertData.length > 1 ? (
       <Line
         key={`alert-hr-${idx}`}
@@ -131,7 +131,7 @@ function App() {
     const { start, end } = range;
     if (end - start < 1) return null;
     const alertData = data.filter(d => d.timeValue >= start && d.timeValue <= end &&
-                                         d.timeValue >= xDomain[0] && d.timeValue <= xDomain[1]);
+      d.timeValue >= xDomain[0] && d.timeValue <= xDomain[1]);
     return alertData.length > 1 ? (
       <Line
         key={`alert-acc-${idx}`}
@@ -207,6 +207,20 @@ function App() {
           />
           <YAxis yAxisId="left" domain={[30, 220]} />
           <YAxis yAxisId="right" orientation="right" domain={[0, 3]} />
+          <ReferenceLine
+            yAxisId="left"
+            y={hrThreshold}
+            stroke="#8884d8"
+            strokeDasharray="2 2"
+            label={{ value: `HR ≥ ${hrThreshold}`, position: 'insideTopLeft', fontSize: 10 }}
+          />
+          <ReferenceLine
+            yAxisId="right"
+            y={accThreshold}
+            stroke="#82ca9d"
+            strokeDasharray="2 2"
+            label={{ value: `Acc ≤ ${accThreshold}`, position: 'insideTopRight', fontSize: 10 }}
+          />
           <Tooltip content={() => null} cursor={false} />
           <Legend />
           <Line
