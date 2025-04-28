@@ -212,7 +212,11 @@ function App() {
             y={hrThreshold}
             stroke="#8884d8"
             strokeDasharray="2 2"
-            label={{ value: `HR ≥ ${hrThreshold}`, position: 'insideTopLeft', fontSize: 10 }}
+            label={{
+              value: `HR ≥ ${hrThreshold}  /  継続 ${duration}s`,
+              position: 'insideTopLeft',
+              fontSize: 10
+            }}
           />
           <ReferenceLine
             yAxisId="right"
