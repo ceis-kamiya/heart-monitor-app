@@ -101,7 +101,9 @@ function App() {
   const xDomain = [startTime, startTime + DISPLAY_SECONDS];
   const displayData = data.filter(d => d.timeValue >= xDomain[0] && d.timeValue <= xDomain[1]);
   const sliderMin = data.length > 0 ? data[0].timeValue : 0;
-  const sliderMax = data.length > 0 ? data[data.length - 1].timeValue - DISPLAY_SECONDS : 0;
+  const sliderMax = data.length > 0
+    ? Math.max(sliderMin, data[data.length - 1].timeValue - DISPLAY_SECONDS)
+    : 0;
   const formatTime = (timeValue) => new Date(timeValue * 1000).toLocaleTimeString();
 
   // グラフに描画するアラートレンジ（1秒未満は描画しない）  
