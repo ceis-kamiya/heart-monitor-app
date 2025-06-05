@@ -1,9 +1,9 @@
 {
-  "name": "heart-monitor-demo",
+  "name": "heart-monitor-app",
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://ceis-kamiya.github.io/heart-monitor-demo",
+  "homepage": "https://ceis-kamiya.github.io/heart-monitor-app",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
