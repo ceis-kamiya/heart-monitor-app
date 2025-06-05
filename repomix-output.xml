@@ -15,7 +15,7 @@ The content is organized as follows:
 2. Repository information
 3. Directory structure
 4. Repository files (if enabled)
-4. Repository files, each consisting of:
+5. Multiple file entries, each consisting of:
   - File path as an attribute
   - Full contents of the file
 </file_format>
@@ -37,10 +37,6 @@ The content is organized as follows:
 - Files are sorted by Git change count (files with more changes are at the bottom)
 </notes>
 
-<additional_info>
-
-</additional_info>
-
 </file_summary>
 
 <directory_structure>
@@ -58,43 +54,35 @@ src/index.css
 src/main.jsx
 src/memo.md
 vite.config.js
+WHS-1/Software Development Kit/include/utwsapi.h
+WHS-1/Software Development Kit/RRD1Sample/framework.h
+WHS-1/Software Development Kit/RRD1Sample/pch.cpp
+WHS-1/Software Development Kit/RRD1Sample/pch.h
+WHS-1/Software Development Kit/RRD1Sample/resource.h
+WHS-1/Software Development Kit/RRD1Sample/RRD1Sample.cpp
+WHS-1/Software Development Kit/RRD1Sample/RRD1Sample.h
+WHS-1/Software Development Kit/RRD1Sample/RRD1Sample.vcxproj
+WHS-1/Software Development Kit/RRD1Sample/RRD1Sample.vcxproj.filters
+WHS-1/Software Development Kit/RRD1Sample/RRD1Sample.vcxproj.user
+WHS-1/Software Development Kit/RRD1Sample/RRD1SampleDlg.cpp
+WHS-1/Software Development Kit/RRD1Sample/RRD1SampleDlg.h
+WHS-1/Software Development Kit/RRD1Sample/targetver.h
+WHS-1/Software Development Kit/WHS1Sample/framework.h
+WHS-1/Software Development Kit/WHS1Sample/pch.cpp
+WHS-1/Software Development Kit/WHS1Sample/pch.h
+WHS-1/Software Development Kit/WHS1Sample/resource.h
+WHS-1/Software Development Kit/WHS1Sample/targetver.h
+WHS-1/Software Development Kit/WHS1Sample/WHS1Sample.cpp
+WHS-1/Software Development Kit/WHS1Sample/WHS1Sample.h
+WHS-1/Software Development Kit/WHS1Sample/WHS1Sample.vcxproj
+WHS-1/Software Development Kit/WHS1Sample/WHS1Sample.vcxproj.filters
+WHS-1/Software Development Kit/WHS1Sample/WHS1Sample.vcxproj.user
+WHS-1/Software Development Kit/WHS1Sample/WHS1SampleDlg.cpp
+WHS-1/Software Development Kit/WHS1Sample/WHS1SampleDlg.h
 </directory_structure>
 
 <files>
 This section contains the contents of the repository's files.
-
-<file path="memo.md">
-## GitHubへの保存
-git add .
-git commit -m "コメント"
-git push
-
-## リモートのoriginの最新の変更を取得
-git fetch origin
-
-## origin/masterの状態に戻す（リモートのorigin/masterに戻したければ先にfetch origin）
-git reset --hard origin/master
-
-## 現在のブランチの確認
-git branch
-
-## ブランチの移動
-git checkout ブランチ名（またはコミットのハッシュ）
-
-## GitHubからのクローン
-git clone https://github.com/ユーザー名/リポジトリ名.git
-
-## デプロイ（Vercelで）
-
-## ローカルで起動
-npm run dev
-
-## prisma studio起動
-npx prisma studio
-
-## コードを1ファイルにまとめる
-npx repomix
-</file>
 
 <file path=".gitignore">
 # Logs
@@ -327,13 +315,3019 @@ createRoot(document.getElementById('root')).render(
 )
 </file>
 
+<file path="WHS-1/Software Development Kit/include/utwsapi.h">
+#pragma once
+
+#include <windows.h>
+
+#ifdef UTWSAPI_EXPORTS
+#define UTWS_API __declspec(dllexport)
+#else
+#define UTWS_API __declspec(dllimport)
+#endif
+
+//デバイス識別子
+//受信機 RRD-1
+#define UTWS_RRD_1    0x00000001
+//送信機 WHS-1
+#define UTWS_WHS_1    0x00000002
+// WHS-1のバイナリデータ
+#define UTWS_WHS_1_BINARYDATA 0x00000003
+
+//エラー識別子のインクルード
+#include "utwserrdef.h"
+
+//構造体のインクルード
+#include "utwsstruct.h"
+
+//////共通////////////////////////////////
+
+//エラー情報を返す
+//戻り値
+//直前に発生したエラーのエラー識別子を返します．
+//解説
+//無効な引数ならば，エラー識別子だけを返します．
+//また，引数のバッファサイズがエラー文字数よりも小さいときは，バッファサイズに切り詰められます．
+UTWS_API UINT WINAPI UTWSGetErrorMessage(
+  //関数実行時のハンドル、open系、close系はハンドルが確定しないので0とする。
+  /*in*/ HANDLE _handle,
+  //エラーに関する説明が格納される文字列バッファへのポインタ
+  /*out*/ LPSTR _err_message,
+  //指定されたバッファに保持できる最大文字数．終端の NULL 文字を含む
+  /*in*/ UINT _max_length
+);
+
+//デバイスを開く
+//戻り値
+//成功するとデバイスへのハンドルが返ります．
+//失敗すると 0 が返ります．
+//32-bit DLL では32bit値，64-bit DLL では64bit値であることに注意してください．
+UTWS_API HANDLE WINAPI UTWSOpenDevice(
+  //オープンしたいデバイスの識別子を指定してください．
+  /*in*/ UINT _device_id,
+  //WHS1-1をオープンするときは，何番目のデバイスをオープンするか指定して下さい．
+  //１台しかつながっていないときは 0として下さい．
+  //RRD-1では0として下さい．
+  /*in*/ UINT _device_no
+);
+
+//デバイスをクローズする
+//戻り値
+//成功すると TRUE が返る．失敗すると FALSE が返る．
+UTWS_API BOOL WINAPI UTWSCloseDevice(
+  //クローズしようとするハンドル
+  /*in*/ HANDLE _handle
+);
+
+//すべてのデバイスをクローズする
+//戻り値
+//なし
+UTWS_API VOID WINAPI UTWSCloseAll(VOID);
+
+//// RRD-1 //////////////////////////////////
+
+//RRD-1でデータ受信を開始する
+//成功ならば TRUE が返る
+//第2引数にはイベントオブジェクトへのポインタを指定します．
+//0 が指定された場合，そのオブジェクトは使用されません
+//受信すると，イベントはシグナル状態になります．
+//シグナル状態は，UTWSRRD1GetData関数ですべてのデータが取り出されない限り
+//非シグナルにはなりません．
+//第3引数にはコールバック関数へのポインタを指定します．
+//コールバック関数の第一引数はユーザが_callBackArgで指定します．
+//受信すると，このコールバック関数が呼び出されます．
+//第2引数は，ハンドルが返ります．
+//コールバック関数のtypedefを以下の通りとします
+typedef VOID(CALLBACK* UTWSRRD1CallBakFunc)(VOID*, VOID*);
+UTWS_API BOOL WINAPI UTWSRRD1StartReceiving(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle,
+  //イベントオブジェクトのハンドル．使用しないときは 0
+  /*in*/ HANDLE _event,
+  //コールバック関数へのポインタ．使用しないときは 0
+  /*in*/ UTWSRRD1CallBakFunc _callBack,
+  //コールバック関数を呼び出すときの第1引数．
+  /*in*/ VOID* _callBackArg
+);
+
+//RRD-1でデータの受信を中止する
+//成功ならば TRUE が返る.
+UTWS_API BOOL CALLBACK UTWSRRD1StopReceiving(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle
+);
+
+//RRD-1で受信したデータが何個残っているか返す
+//戻り値　失敗ならば -1 が返る．
+UTWS_API UINT WINAPI UTWSRRD1DataCount(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle
+);
+
+//RRD-1で受信したデータを一つ取り出す．
+//DLL内では，最大1024個のデータをバッファできる．
+//この関数を実行すると，取り出されたデータがバッファから取り去られる．
+//成功した場合は TRUE を返す．
+//データバッファに何もない状態で呼び出されると，FALSE をかえし，
+//ライブラリのエラーステータスは UTWS_ERR_EMPTY_DATA に設定されます．
+//このときに_dataの指すバッファに返される値は不定です．
+//_data が 0の時は，何もしません．
+UTWS_API BOOL WINAPI UTWSRRD1GetData(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle,
+  //データを受けるとバッファ（構造体）へのポインタ
+  /*out*/ RRD1Data* _data
+);
+
+//RRD-1で受信したデータを一つ取り出す．
+//UTWSRRD1GetData のミリ秒単位バージョン
+UTWS_API BOOL WINAPI UTWSRRD1GetDataEx(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle,
+  //データを受けるとバッファ（構造体）へのポインタ
+  /*out*/ RRD1DataEx* _data
+);
+
+//RRD-1がオープンしているかどうか調べる
+//戻り値　オープンしていればTURE，していなければ FALSE を返す．
+UTWS_API BOOL WINAPI UTWSRRD1IsOpen(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle
+);
+
+//RRD-1がオープン中にUSBコネクタから取り外されたときに呼び出される
+//コールバック関数を登録する．
+//成功の場合は TURE をかえす．
+UTWS_API BOOL WINAPI UTWSRRD1SetCallBackDisconnect(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle,
+  //コールバック関数へのポインタ．使用しないときは 0
+  /*in*/ UTWSRRD1CallBakFunc _callBack,
+  //コールバック関数を呼び出すときの引数
+  /*in*/ VOID* _callBackArg
+);
+
+//RRD-1の無線アドレスを取得する．
+//成功すれば TRUE を返します．
+//引数に文字列をして返されるので,バッファには11文字以上確保して下さい．
+UTWS_API BOOL WINAPI UTWSRRD1GetLocalAddress(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle,
+  //送信先アドレスが返されるバッファへのポインタ
+  /*out*/ CHAR* _address
+);
+
+//RRD-1の無線アドレスを設定します．
+//成功すればTRUEを返します．
+//引数は0ターミネーターの文字列です．
+UTWS_API BOOL WINAPI UTWSRRD1SetLocalAddress(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle,
+  //送信先アドレスへのポインタ
+  /*in*/ const CHAR* _address
+);
+
+//// WHS-1 //////////////////////////////////
+//接続されているWHS-1の台数を返します．
+//戻り値 : 接続している台数返します．失敗したら -1 を返します．
+//_numConnected に接続予定台数を指定して下さい．
+//_timeout の間に 20msec間隔で接続台数を調べます．
+//接続予定台数に達したらすぐに制御が戻ります．
+//_numConnectedが0のときは，_timeoutの間デバイス探します．
+//このときは_timeout後に制御が戻ります．
+UTWS_API UINT WINAPI UTWSWHS1CountConnected(
+  //接続予定台数．未定のときは　0
+  /*in*/ UINT _numConnected,
+  //タイムアウト，単位msec
+  /*in*/ UINT _timeout
+);
+
+//WHS-1 の設定値を読み取る
+//成功すれば TRUE を返す．
+UTWS_API BOOL WINAPI UTWSWHS1ReadConfig(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle,
+  //設定情報を格納する構造体へのポインタ
+  /*out*/ WHS1Config* _readConfig
+);
+
+//WHS-1 の設定値を書き込む
+//成功すれば TRUE を返す．
+UTWS_API BOOL WINAPI UTWSWHS1WriteConfig(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle,
+  //設定情報を格納する構造体へのポインタ
+  /*in*/ const WHS1Config* _readConfig,
+  //メモリモードでメモリフルのとき 0: 先頭から上書き，1: フルになった段階で止める
+  //メモリモードに設定しないときは無視される
+  /*in*/ BYTE _mem_mode,
+  //以下現在時刻を設定.メモリモードに設定しないときは無視されるので 0 でかまわない．
+  /*in*/ WORD _year,
+  /*in*/ WORD _month,
+  /*in*/ WORD _day,
+  /*in*/ WORD _hour,
+  /*in*/ WORD _min,
+  /*in*/ WORD _sec
+);
+
+//WHS-1の無線送信先アドレスを取得します．
+//成功すれば TRUE を返します．
+//引数に文字列をして返されるので,バッファには11文字以上確保して下さい．
+UTWS_API BOOL WINAPI UTWSWHS1GetDestinationAddress(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle,
+  //送信先アドレスが返されるバッファへのポインタ
+  /*out*/ CHAR* _address
+);
+
+//WHS-1の無線送信先アドレスを設定します．
+//成功すればTRUEを返します．
+//引数は0ターミネーターの文字列です．
+UTWS_API BOOL WINAPI UTWSWHS1SetDestinationAddress(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle,
+  //送信先アドレスへのポインタ
+  /*in*/ const CHAR* _address
+);
+
+//WHS-1 からメモリの内容をダウンロードしライブラリ内のメモリに保存します．
+//戻り値: 読み込んだデータ数を返します．エラーのときの戻り値は-1です．
+UTWS_API UINT WINAPI UTWSWHS1ReadMemory(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle
+);
+
+//WHS-1 からメモリの内容をダウンロードしライブラリ内のメモリに保存します．
+//戻り値: エラーのときの戻り値はFALSEです．
+UTWS_API BOOL WINAPI UTWSWHS1ReadMemoryEx(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle,
+  //読み出したデータのヘッダ部
+  /*out*/ WHS1MemDataHeader* _header
+);
+
+//WHS-1 からメモリの内容をダウンロードしライブラリ内のメモリに保存したデータを
+//を取り出す．
+//戻り値 : 失敗のときfalse
+UTWS_API BOOL WINAPI UTWSWHS1GetReceivedMemory(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle,
+  //読み出したデータのヘッダ部
+  /*out*/ WHS1MemDataHeader* _header,
+  //読み出したデータのデータ部，UTWSWHS1ReadMemory関数で得られた
+  //データ数だけの配列をあらかじめ用意して下さい．
+  //0ならばデータを読み込みません．
+  /*out*/ WHS1EcgData* _data,
+  //用意した配列WHS1EcgData[]のサイズ
+  /*in*/ UINT _size,
+  //TRUEのとき1レコード当たりの時計を調整します
+  /*in*/ BOOL _time_adjust
+);
+UTWS_API BOOL WINAPI UTWSWHS1GetReadedMemory(
+  HANDLE _handle, WHS1MemDataHeader* _header, WHS1EcgData* _data, UINT _size, BOOL _time_adjust
+);
+
+//WHS-1 からメモリの内容をダウンロードしライブラリ内のメモリに保存したデータを
+//ファイルに書き出す.
+//戻り値 : 失敗のときFALSE
+UTWS_API BOOL WINAPI UTWSWHS1SaveReceivedMemory(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle,
+  //パス名
+  /*in*/ LPCSTR _path,
+  //TRUEのとき1レコード当たりの時計を調整します
+  /*in*/ BOOL _time_adjust
+);
+UTWS_API BOOL WINAPI UTWSWHS1SaveReadedMemory(
+  HANDLE _handle, LPCSTR _path, BOOL _time_adjust
+);
+
+//WHS-1 からメモリの内容をダウンロードしライブラリ内のメモリに保存したデータを
+//を取り出す．(加速度1秒更新モード時に，＋加速度とー加速度を独立して取得できる）
+//戻り値 : 失敗のときfalse
+UTWS_API BOOL WINAPI UTWSWHS1GetReceivedMemoryEx(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle,
+  //読み出したデータのヘッダ部
+  /*out*/ WHS1MemDataHeader* _header,
+  //読み出したデータのデータ部，UTWSWHS1ReadMemory関数で得られた
+  //データ数だけの配列をあらかじめ用意して下さい．
+  //0ならばデータを読み込みません．
+  /*out*/ WHS1EcgDataEx* _data,
+  //用意した配列WHS1EcgData[]のサイズ
+  /*in*/ UINT _size,
+  //TRUEのとき1レコード当たりの時計を調整します
+  /*in*/ BOOL _time_adjust
+);
+
+//WHS-1のバージョンを返す．
+UTWS_API BOOL WINAPI UTWSWHS1Version(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle,
+  //バージョン
+  /*out*/ UINT* _ver
+);
+
+//WHS-1に記録されたデータのブロック数を返す
+//戻り値 : 失敗のときfalse
+UTWS_API BOOL WINAPI UTWSWHS1GetRecordedSize(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle,
+  //データが記録されているブロック数
+  /*out*/ UINT* _size_to_read
+);
+
+//WHS-1のフラッシュメモリの内容を非同期でイナリで取り込む,
+//非同期なので、取り込み完了をイベントオブジェクトまたはコールバック関数で調べる
+//戻り値:込み込み開始が失敗したらFALSE
+UTWS_API BOOL WINAPI UTWSWHS1ReadMemoryBinary(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle,
+  //取り込み完了時にシグナル状態となるイベントのハンドル。使用しないならば0とする。
+  /*in*/ HANDLE _user_event,
+  //取り込み完了時に呼び出すコールバック関数。使用しないならば0とする。
+  /*in*/ void (*_user_call_back)(void*),
+  //コールバック関数の引数。
+  void* _user_call_back_arg
+);
+
+//バイナリで取り込んだメモリのバイト数
+//getMemoryBinary関数実行前に、ここで得られたバイト数のメモリを確保する
+//戻り値 : 失敗したらFALSE、失敗時の*_sizeは不定
+UTWS_API BOOL WINAPI UTWSWHS1GetMemoryBinarySize(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle,
+  //バイト数
+  /*out*/ UINT* _size
+);
+
+//取り込んだバイナリをコピーする
+//先頭の1byteは、WHS-1のtempIDが記録されている。
+//従って、実際のメモリよりも1バイト多い。
+//バイナリは、透過エスケープを置換済み。
+//また、256バイトブロックの開始文字0x01、終端文字0x04および、メモリ終端0xffffffffは削除済み。
+//戻り値 : _bufsizeが読み込んだサイズよりも小さければ失敗、FALSEを返す。
+UTWS_API BOOL WINAPI UTWSWHS1GetMemoryBinary(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle,
+  //コピー先のバッファアドレス
+  /*out*/ BYTE* _buf,
+  //バッファのサイズ
+  /*in*/ UINT _bufsize
+);
+
+//バイナリをファイルへ保存する
+//戻り値:失敗でFALSEを返す
+UTWS_API BOOL WINAPI UTWSWHS1SaveMemoryBinary(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle,
+  //保存先ファイル名
+  /*in*/ LPCSTR _filename
+);
+
+//バイナリリードの結果を返す
+//戻り値 : エラー識別子
+UTWS_API UINT WINAPI UTWSWHS1ReadMemoryBinaryResult(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle
+);
+
+//読み込み中のバイト数と読み込まれる予定のバイト数を返す
+//単位は1ブロック/256バイト
+//戻り値:　読み込み中以外はFALSEを返す。
+//         このときの _seze_readと_size_for_readの値を操作しない
+UTWS_API BOOL WINAPI UTWSWHS1ReadSize(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle,
+  //読み込み中のブロック数
+  /*out*/ UINT* _size_read,
+  //読み込まれる予定ブロック数
+  /*out*/ UINT* _size_for_read
+);
+
+//WHS-1が切断(USBを抜くなど)されたときに呼び出される
+//コールバック関数を登録する
+//成功の場合は TURE をかえす．
+UTWS_API BOOL WINAPI UTWSWHS1SetCallBackDisconnect(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle,
+  //コールバック関数へのポインタ．使用しないときは 0
+  /*in*/ void (*_callBack)(void*),
+  //コールバック関数を呼び出すときの引数
+  /*in*/ void* _callBackArg
+);
+
+//WHS-1の連続測定日数を取得する
+//_days == 0　はOFF
+//成功の場合は TRUEを返す．
+UTWS_API BOOL WINAPI UTWSWHS1GetContinuousDays(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle,
+  //連続日数
+  /*out*/ BYTE* _days
+);
+
+//WHS-1の連続測定に数を設定する
+//_days == 0はOFF，_days == [1-5]これ以外はFALSEを返す．
+//成功の場合はTRUEを返す．
+UTWS_API BOOL WINAPI UTWSWHS1SetContinuousDays(
+  //デバイスのハンドル
+  /*in*/ HANDLE _handle,
+  //連続日数
+  /*out*/ BYTE _days
+);
+
+///////////////////////////////////////////////////////////////////
+//WHS-1フラッシュのバイナリからデータを復元する。
+//戻り値: データ数を返す。失敗のとき-1。
+//バイナリからデータを生成する。データ数を返す。
+UTWS_API UINT WINAPI UTWSWHS1BinaryToData(
+  //バイナリオブジェクトのハンドル
+  /*in*/  HANDLE _handle,
+  //バイナリデータへのポインタ
+  /*in*/  BYTE* _binary,
+  //バイナリデータのバイト数
+  /*in*/  UINT  _size,
+  //測定時刻を補完したいときTURE
+  /*in*/  BOOL _time_adjust,
+  //リザーブ 常時FALSE
+  /*in*/  BOOL _dtr_rri
+);
+
+//WHS-1フラッシュのバイナリを保存したファイルから、データを復元する。
+//戻り値: データ数を返す。失敗のとき-1。
+//バイナリからデータを生成する。データ数を返す。
+UTWS_API UINT WINAPI UTWSWHS1BinaryFileToData(
+  //バイナリオブジェクトのハンドル
+  /*in*/  HANDLE _handle,
+  //ファイル名
+  /*in*/  LPCTSTR _binaryfile_name,
+  //測定時刻を補完したいときTURE
+  /*in*/  BOOL _time_adjust,
+  //リザーブ 常時FALSE
+  /*in*/  BOOL _dtr_rri
+);
+
+//バイナリオブジェクトで復元されたデータを取り出す。
+//戻り値 : 失敗のときFALSE
+UTWS_API BOOL WINAPI UTWSWHS1GetDataFromBinary(
+  //バイナリオブジェクトのハンドル
+  /*in*/  HANDLE _handle,
+  //データのヘッダ部へのバッファ
+  /*out*/ WHS1MemDataHeader* _header,
+  //データを保存する配列へのポインタ
+  //UTWSWHS1BinaryToData関数、またはUTWSWHS1BinaryFileToData関数で得られた
+  //データ数だけ配列を準備する。
+  /*out*/ WHS1EcgDataEx* _data,
+  //_dataのsize
+  /*in*/  UINT _size
+);
+
+//バイナリオブジェクトで復元されたデータをファイルにCSV保存する
+//戻り値 : 失敗のときFALSE
+UTWS_API BOOL WINAPI UTWSWHS1SaveDataFromBinary(
+  //バイナリデータオブジェクトのハンドル
+  /*in*/  HANDLE _handle,
+  //ファイル名
+  /*in*/  LPCSTR _file_name
+);
+</file>
+
+<file path="WHS-1/Software Development Kit/RRD1Sample/framework.h">
+#pragma once
+
+#ifndef VC_EXTRALEAN
+#define VC_EXTRALEAN            // Windows ヘッダーから使用されていない部分を除外します。
+#endif
+
+#include "targetver.h"
+
+#define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS      // 一部の CString コンストラクターは明示的です。
+
+// 一般的で無視しても安全な MFC の警告メッセージの一部の非表示を解除します。
+#define _AFX_ALL_WARNINGS
+
+#include <afxwin.h>         // MFC のコアおよび標準コンポーネント
+#include <afxext.h>         // MFC の拡張部分
+
+
+
+
+
+#ifndef _AFX_NO_OLE_SUPPORT
+#include <afxdtctl.h>           // MFC の Internet Explorer 4 コモン コントロール サポート
+#endif
+#ifndef _AFX_NO_AFXCMN_SUPPORT
+#include <afxcmn.h>             // MFC の Windows コモン コントロール サポート
+#endif // _AFX_NO_AFXCMN_SUPPORT
+
+#include <afxcontrolbars.h>     // MFC におけるリボンとコントロール バーのサポート
+</file>
+
+<file path="WHS-1/Software Development Kit/RRD1Sample/pch.cpp">
+#include "pch.h"
+</file>
+
+<file path="WHS-1/Software Development Kit/RRD1Sample/pch.h">
+#ifndef PCH_H
+#define PCH_H
+
+#include <memory>
+#include <thread>
+#include <vector>
+#include <algorithm>
+#include <sstream>
+#include <iomanip>
+#include <cmath>
+
+#ifdef _WIN64
+#pragma comment(lib, "../x64/utws.lib")
+#else
+#pragma comment(lib, "../x86/utws.lib")
+#endif
+
+#include "framework.h"
+#include "../include/utwsapi.h"
+
+#endif //PCH_H
+</file>
+
+<file path="WHS-1/Software Development Kit/RRD1Sample/resource.h">
+//{{NO_DEPENDENCIES}}
+// Microsoft Visual C++ で生成されたインクルード ファイル。
+// RRD1Sample.rc で使用
+//
+#define IDD_RRD1SAMPLE_DIALOG           102
+#define IDR_MAINFRAME                   128
+#define IDC_BUTTON_OPEN                 1000
+#define IDC_STATIC_OPEN_STATUS          1001
+#define IDC_BUTTON_CLOSE                1002
+#define IDC_STATIC_CLOSE_STATUS         1003
+#define IDC_RADIO_TIMER                 1004
+#define IDC_RADIO_EVENT                 1005
+#define IDC_RADIO_CALLBACK              1006
+#define IDC_BUTTON_START                1007
+#define IDC_BUTTON_STOP                 1008
+#define IDC_STATIC_HEADER               1010
+#define IDC_STATIC_ECG_MODE             1011
+#define IDC_STATIC_ECG1                 1012
+#define IDC_STATIC_ECG2                 1013
+#define IDC_STATIC_ECG3                 1014
+#define IDC_STATIC_TEMP1                1015
+#define IDC_STATIC_TEMP2                1016
+#define IDC_STATIC_TEMP3                1017
+#define IDC_STATIC_ACCX1                1018
+#define IDC_STATIC_ACCX2                1019
+#define IDC_STATIC_ACCX3                1020
+#define IDC_STATIC_ACCY1                1021
+#define IDC_STATIC_ACCY2                1022
+#define IDC_STATIC_ACCY3                1023
+#define IDC_STATIC_ACCZ1                1024
+#define IDC_STATIC_ACCZ2                1025
+#define IDC_STATIC_ACCZ3                1026
+#define IDC_STATIC_ECG4                 1027
+#define IDC_STATIC_SENDID               1028
+#define IDC_STATIC_TEMP_ID              1029
+#define IDC_EDIT_ADDRESS                1030
+#define IDC_BUTTON_GET_ADDRESS          1031
+#define IDC_BUTTON_SET_ADDRESS          1032
+#define IDC_STATIC_TEMP4                1033
+#define IDC_STATIC_ACCX4                1034
+#define IDC_STATIC_ACCY4                1035
+#define IDC_STATIC_ACCZ4                1036
+#define IDC_STATIC_ECG5                 1037
+#define IDC_STATIC_TEMP5                1038
+#define IDC_STATIC_ACCX5                1039
+#define IDC_STATIC_ACCY5                1040
+#define IDC_STATIC_ACCZ5                1041
+
+// Next default values for new objects
+// 
+#ifdef APSTUDIO_INVOKED
+#ifndef APSTUDIO_READONLY_SYMBOLS
+#define _APS_NEXT_RESOURCE_VALUE        129
+#define _APS_NEXT_COMMAND_VALUE         32771
+#define _APS_NEXT_CONTROL_VALUE         1000
+#define _APS_NEXT_SYMED_VALUE           101
+#endif
+#endif
+</file>
+
+<file path="WHS-1/Software Development Kit/RRD1Sample/RRD1Sample.cpp">
+// RRD1Sample.cpp : アプリケーションのクラス動作を定義します。
+//
+
+#include "pch.h"
+#include "framework.h"
+#include "RRD1Sample.h"
+#include "RRD1SampleDlg.h"
+
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
+
+// CRRD1SampleApp
+
+BEGIN_MESSAGE_MAP(CRRD1SampleApp, CWinApp)
+  ON_COMMAND(ID_HELP, &CWinApp::OnHelp)
+END_MESSAGE_MAP()
+
+// CRRD1SampleApp の構築
+
+CRRD1SampleApp::CRRD1SampleApp()
+{
+}
+
+// 唯一の CRRD1SampleApp オブジェクト
+
+CRRD1SampleApp theApp;
+
+// CRRD1SampleApp の初期化
+
+BOOL CRRD1SampleApp::InitInstance()
+{
+  CWinApp::InitInstance();
+
+  CRRD1SampleDlg dlg;
+  m_pMainWnd = &dlg;
+  INT_PTR nResponse = dlg.DoModal();
+  if (nResponse == IDOK)
+  {
+  }
+  else if (nResponse == IDCANCEL)
+  {
+  }
+  else if (nResponse == -1)
+  {
+    TRACE(traceAppMsg, 0, "警告: ダイアログの作成に失敗しました。アプリケーションは予期せずに終了します。\n");
+    TRACE(traceAppMsg, 0, "警告: ダイアログで MFC コントロールを使用している場合、#define _AFX_NO_MFC_CONTROLS_IN_DIALOGS を指定できません。\n");
+  }
+
+#if !defined(_AFXDLL) && !defined(_AFX_NO_MFC_CONTROLS_IN_DIALOGS)
+  ControlBarCleanUp();
+#endif
+
+  // ダイアログは閉じられました。アプリケーションのメッセージ ポンプを開始しないで
+  //  アプリケーションを終了するために FALSE を返してください。
+  return FALSE;
+}
+</file>
+
+<file path="WHS-1/Software Development Kit/RRD1Sample/RRD1Sample.h">
+// RRD1Sample.h : PROJECT_NAME アプリケーションのメイン ヘッダー ファイルです
+//
+
+#pragma once
+
+#ifndef __AFXWIN_H__
+#error "PCH に対してこのファイルをインクルードする前に 'pch.h' をインクルードしてください"
+#endif
+
+#include "resource.h"		// メイン シンボル
+
+// CRRD1SampleApp:
+// このクラスの実装については、RRD1Sample.cpp を参照してください
+//
+
+class CRRD1SampleApp : public CWinApp
+{
+public:
+  CRRD1SampleApp();
+
+  // オーバーライド
+public:
+  virtual BOOL InitInstance();
+
+  // 実装
+
+  DECLARE_MESSAGE_MAP()
+};
+
+extern CRRD1SampleApp theApp;
+</file>
+
+<file path="WHS-1/Software Development Kit/RRD1Sample/RRD1Sample.vcxproj">
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{D4749C73-D2CB-48B3-8849-DFFE66BEAA20}</ProjectGuid>
+    <Keyword>MFCProj</Keyword>
+    <RootNamespace>RRD1Sample</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Platform)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)x86\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Platform)\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+    <Midl>
+      <MkTypLibCompatible>false</MkTypLibCompatible>
+      <ValidateAllParameters>true</ValidateAllParameters>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0411</Culture>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+    <Midl>
+      <MkTypLibCompatible>false</MkTypLibCompatible>
+      <ValidateAllParameters>true</ValidateAllParameters>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0411</Culture>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <Midl>
+      <MkTypLibCompatible>false</MkTypLibCompatible>
+      <ValidateAllParameters>true</ValidateAllParameters>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0411</Culture>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <Midl>
+      <MkTypLibCompatible>false</MkTypLibCompatible>
+      <ValidateAllParameters>true</ValidateAllParameters>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0411</Culture>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="framework.h" />
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="RRD1Sample.h" />
+    <ClInclude Include="RRD1SampleDlg.h" />
+    <ClInclude Include="targetver.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="RRD1Sample.cpp" />
+    <ClCompile Include="RRD1SampleDlg.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RRD1Sample.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\RRD1Sample.rc2" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\RRD1Sample.ico" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
+</file>
+
+<file path="WHS-1/Software Development Kit/RRD1Sample/RRD1Sample.vcxproj.filters">
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="ソース ファイル">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="ヘッダー ファイル">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="リソース ファイル">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="RRD1Sample.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="RRD1SampleDlg.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="framework.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="RRD1Sample.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="RRD1SampleDlg.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RRD1Sample.rc">
+      <Filter>リソース ファイル</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\RRD1Sample.rc2">
+      <Filter>リソース ファイル</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\RRD1Sample.ico">
+      <Filter>リソース ファイル</Filter>
+    </Image>
+  </ItemGroup>
+</Project>
+</file>
+
+<file path="WHS-1/Software Development Kit/RRD1Sample/RRD1Sample.vcxproj.user">
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup />
+</Project>
+</file>
+
+<file path="WHS-1/Software Development Kit/RRD1Sample/RRD1SampleDlg.cpp">
+// RRD1SampleDlg.cpp : 実装ファイル
+//
+
+#include "pch.h"
+#include "framework.h"
+#include "RRD1Sample.h"
+#include "RRD1SampleDlg.h"
+#include "afxdialogex.h"
+
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
+
+// CRRD1SampleDlg ダイアログ
+
+CRRD1SampleDlg::CRRD1SampleDlg(CWnd* pParent /*=nullptr*/)
+  : hRRD_(0),
+  event_(nullptr),
+  timerID_(0),
+  thread_(),
+  stop_thread_(nullptr),
+  wndECG_(),
+  wndTemp_(),
+  wndAccX_(),
+  wndAccY_(),
+  wndAccZ_(),
+  data_(),
+  radioTimer_(),
+  radioEvent_(),
+  radioCallBack_(),
+  editOpenStatus_(),
+  editCloseStatus_(),
+  editAddress_(),
+  staticHeader_(),
+  sendID_(),
+  tempID_(),
+  staticECG1_(),
+  staticECG2_(),
+  staticECG3_(),
+  staticECG4_(),
+  staticECG5_(),
+  staticTemp1_(),
+  staticTemp2_(),
+  staticTemp3_(),
+  staticTemp4_(),
+  staticTemp5_(),
+  staticAccX1_(),
+  staticAccX2_(),
+  staticAccX3_(),
+  staticAccX4_(),
+  staticAccX5_(),
+  staticAccY1_(),
+  staticAccY2_(),
+  staticAccY3_(),
+  staticAccY4_(),
+  staticAccY5_(),
+  staticAccZ1_(),
+  staticAccZ2_(),
+  staticAccZ3_(),
+  staticAccZ4_(),
+  staticAccZ5_(),
+  staticEcgMode_(),
+  CDialog(IDD_RRD1SAMPLE_DIALOG, pParent)
+{
+  m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+}
+
+void CRRD1SampleDlg::DoDataExchange(CDataExchange* pDX)
+{
+  CDialog::DoDataExchange(pDX);
+  DDX_Control(pDX, IDC_RADIO_TIMER, radioTimer_);
+  DDX_Control(pDX, IDC_RADIO_EVENT, radioEvent_);
+  DDX_Control(pDX, IDC_RADIO_CALLBACK, radioCallBack_);
+  DDX_Control(pDX, IDC_STATIC_OPEN_STATUS, editOpenStatus_);
+  DDX_Control(pDX, IDC_STATIC_CLOSE_STATUS, editCloseStatus_);
+  DDX_Control(pDX, IDC_EDIT_ADDRESS, editAddress_);
+  DDX_Control(pDX, IDC_STATIC_HEADER, staticHeader_);
+  DDX_Control(pDX, IDC_STATIC_SENDID, sendID_);
+  DDX_Control(pDX, IDC_STATIC_TEMP_ID, tempID_);
+  DDX_Control(pDX, IDC_STATIC_ECG1, staticECG1_);
+  DDX_Control(pDX, IDC_STATIC_ECG2, staticECG2_);
+  DDX_Control(pDX, IDC_STATIC_ECG3, staticECG3_);
+  DDX_Control(pDX, IDC_STATIC_ECG4, staticECG4_);
+  DDX_Control(pDX, IDC_STATIC_ECG5, staticECG5_);
+  DDX_Control(pDX, IDC_STATIC_TEMP1, staticTemp1_);
+  DDX_Control(pDX, IDC_STATIC_TEMP2, staticTemp2_);
+  DDX_Control(pDX, IDC_STATIC_TEMP3, staticTemp3_);
+  DDX_Control(pDX, IDC_STATIC_TEMP4, staticTemp4_);
+  DDX_Control(pDX, IDC_STATIC_TEMP5, staticTemp5_);
+  DDX_Control(pDX, IDC_STATIC_ACCX1, staticAccX1_);
+  DDX_Control(pDX, IDC_STATIC_ACCX2, staticAccX2_);
+  DDX_Control(pDX, IDC_STATIC_ACCX3, staticAccX3_);
+  DDX_Control(pDX, IDC_STATIC_ACCX4, staticAccX4_);
+  DDX_Control(pDX, IDC_STATIC_ACCX5, staticAccX5_);
+  DDX_Control(pDX, IDC_STATIC_ACCY1, staticAccY1_);
+  DDX_Control(pDX, IDC_STATIC_ACCY2, staticAccY2_);
+  DDX_Control(pDX, IDC_STATIC_ACCY3, staticAccY3_);
+  DDX_Control(pDX, IDC_STATIC_ACCY4, staticAccY4_);
+  DDX_Control(pDX, IDC_STATIC_ACCY5, staticAccY5_);
+  DDX_Control(pDX, IDC_STATIC_ACCZ1, staticAccZ1_);
+  DDX_Control(pDX, IDC_STATIC_ACCZ2, staticAccZ2_);
+  DDX_Control(pDX, IDC_STATIC_ACCZ3, staticAccZ3_);
+  DDX_Control(pDX, IDC_STATIC_ACCZ4, staticAccZ4_);
+  DDX_Control(pDX, IDC_STATIC_ACCZ5, staticAccZ5_);
+  DDX_Control(pDX, IDC_STATIC_ECG_MODE, staticEcgMode_);
+}
+
+BEGIN_MESSAGE_MAP(CRRD1SampleDlg, CDialog)
+  ON_WM_PAINT()
+  ON_WM_QUERYDRAGICON()
+  ON_BN_CLICKED(IDC_BUTTON_OPEN, &CRRD1SampleDlg::OnBnClickedButtonOpen)
+  ON_BN_CLICKED(IDC_BUTTON_CLOSE, &CRRD1SampleDlg::OnBnClickedButtonClose)
+  ON_WM_CLOSE()
+  ON_BN_CLICKED(IDC_BUTTON_GET_ADDRESS, &CRRD1SampleDlg::OnBnClickedButtonGetAddress)
+  ON_BN_CLICKED(IDC_BUTTON_SET_ADDRESS, &CRRD1SampleDlg::OnBnClickedButtonSetAddress)
+  ON_BN_CLICKED(IDC_BUTTON_START, &CRRD1SampleDlg::OnBnClickedButtonStart)
+  ON_BN_CLICKED(IDC_BUTTON_STOP, &CRRD1SampleDlg::OnBnClickedButtonStop)
+  ON_WM_TIMER()
+END_MESSAGE_MAP()
+
+// CRRD1SampleDlg メッセージ ハンドラー
+
+BOOL CRRD1SampleDlg::OnInitDialog()
+{
+  CDialog::OnInitDialog();
+
+  // このダイアログのアイコンを設定します。アプリケーションのメイン ウィンドウがダイアログでない場合、
+  //  Framework は、この設定を自動的に行います。
+  SetIcon(m_hIcon, TRUE);			// 大きいアイコンの設定
+  SetIcon(m_hIcon, FALSE);		// 小さいアイコンの設定
+
+  // TODO: 初期化をここに追加します。
+  //受信検出はデフォルトでタイマーを使う
+  radioTimer_.SetCheck(BST_CHECKED);
+  //受信表示staticのvectorへの登録
+  wndECG_.push_back(&staticECG1_);
+  wndECG_.push_back(&staticECG2_);
+  wndECG_.push_back(&staticECG3_);
+  wndECG_.push_back(&staticECG4_);
+  wndECG_.push_back(&staticECG5_);
+  wndTemp_.push_back(&staticTemp1_);
+  wndTemp_.push_back(&staticTemp2_);
+  wndTemp_.push_back(&staticTemp3_);
+  wndTemp_.push_back(&staticTemp4_);
+  wndTemp_.push_back(&staticTemp5_);
+  wndAccX_.push_back(&staticAccX1_);
+  wndAccX_.push_back(&staticAccX2_);
+  wndAccX_.push_back(&staticAccX3_);
+  wndAccX_.push_back(&staticAccX4_);
+  wndAccX_.push_back(&staticAccX5_);
+  wndAccY_.push_back(&staticAccY1_);
+  wndAccY_.push_back(&staticAccY2_);
+  wndAccY_.push_back(&staticAccY3_);
+  wndAccY_.push_back(&staticAccY4_);
+  wndAccY_.push_back(&staticAccY5_);
+  wndAccZ_.push_back(&staticAccZ1_);
+  wndAccZ_.push_back(&staticAccZ2_);
+  wndAccZ_.push_back(&staticAccZ3_);
+  wndAccZ_.push_back(&staticAccZ4_);
+  wndAccZ_.push_back(&staticAccZ5_);
+
+  return TRUE;  // フォーカスをコントロールに設定した場合を除き、TRUE を返します。
+}
+
+//ヘッダ部の文字列を生成し表示する
+void displayHeader(CWnd* _wnd, const RRD1DataEx& _data)
+{
+  using namespace std;
+
+  stringstream ss;
+  ss << setw(2) << setfill('0') << _data.hour << ':'
+    << setw(2) << setfill('0') << _data.min << ':'
+    << setw(2) << setfill('0') << _data.sec << '.'
+    << setw(3) << setfill('0') << _data.msec;
+
+  switch (_data.ecg_mode) {
+  case 0:
+    ss << " 心拍波形";
+    break;
+  case 1:
+    ss << " 心拍周期";
+    break;
+  case 2:
+    ss << " 心拍数";
+    break;
+  default:
+    ss << " 加速度";
+  }
+  if (1 == _data.ecg_mode || 2 == _data.ecg_mode) {
+    ss << " 加速度センサモード: " << (0 == _data.acc_mode ? "移動平均" : "ピークホールド");
+  }
+  if (0 != _data.ecg_mode && 0 == _data.sampling_freq)
+    ss << " 1拍1回送信";
+  if (_data.lowbattery)
+    ss << " ローバッテリー";
+  if (_data.saturation)
+    ss << " 入力信号飽和";
+  _wnd->SetWindowText(ss.str().c_str());
+}
+
+//BYTE値を数値としてウィンドウに書き込む
+void displayByteValue(CWnd* _wnd, BYTE _b)
+{
+  std::stringstream ss;
+  ss << static_cast<int>(_b);
+
+  _wnd->SetWindowText(ss.str().c_str());
+}
+
+//WORD値をウィンドウに書き込む
+void displayWordValue(CWnd* _wnd, WORD _w)
+{
+  std::stringstream ss;
+  ss << static_cast<int>(_w);
+
+  _wnd->SetWindowText(ss.str().c_str());
+}
+
+//字数を下 _p 桁の制度で表示する
+void displayFloatValue(CWnd* _wnd, double _v, int _p)
+{
+  std::stringstream ss;
+  ss.setf(std::ios_base::fixed, std::ios_base::floatfield);
+  ss << std::setprecision(_p) << _v;
+
+  _wnd->SetWindowText(ss.str().c_str());
+}
+
+//受信文字を更新する
+void displayReceivedData(CRRD1SampleDlg& _p, const RRD1DataEx& _data)
+{
+  displayHeader(&_p.staticHeader_, _data);
+  displayByteValue(&_p.sendID_, _data.sendedID);
+  displayByteValue(&_p.tempID_, _data.tempID);
+
+  switch (_data.ecg_mode)
+  {
+  case 0:
+    _p.staticEcgMode_.SetWindowText("心拍波形");
+    for (int i = 0; i != _data.data_count; ++i)
+      displayWordValue(_p.wndECG_[i], _data.data[i].ecg);
+    break;
+  case 1:
+    _p.staticEcgMode_.SetWindowText("心拍間隔");
+    for (int i = 0; i != _data.data_count; ++i)
+      displayWordValue(_p.wndECG_[i], _data.data[i].ecg);
+    break;
+  case 2:
+    _p.staticEcgMode_.SetWindowText("心拍数");
+    for (int i = 0; i != _data.data_count; ++i)
+      displayFloatValue(_p.wndECG_[i], 60.0 * 1000.0 / double(_data.data[i].ecg), 1);
+    break;
+  case 3:
+    for (auto wnd : _p.wndECG_) {
+      wnd->SetWindowText("");
+    }
+    for (int i = 0; i != _data.data_count; ++i) {
+      displayFloatValue(_p.wndECG_[i], std::hypot(_data.data[i].acc_x, _data.data[i].acc_y, _data.data[i].acc_z), 4);
+    }
+    _p.staticEcgMode_.SetWindowText("|加速度|");
+  default:
+    break;
+  }
+
+  for (int i = 0; i != _data.data_count; ++i) {
+    displayFloatValue(_p.wndTemp_[i], _data.data[i].temp, 1);
+    displayFloatValue(_p.wndAccX_[i], _data.data[i].acc_x, 4);
+    displayFloatValue(_p.wndAccY_[i], _data.data[i].acc_y, 4);
+    displayFloatValue(_p.wndAccZ_[i], _data.data[i].acc_z, 4);
+  }
+}
+
+// ダイアログに最小化ボタンを追加する場合、アイコンを描画するための
+//  下のコードが必要です。ドキュメント/ビュー モデルを使う MFC アプリケーションの場合、
+//  これは、Framework によって自動的に設定されます。
+
+void CRRD1SampleDlg::OnPaint()
+{
+  if (IsIconic())
+  {
+    CPaintDC dc(this); // 描画のデバイス コンテキスト
+
+    SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
+
+    // クライアントの四角形領域内の中央
+    int cxIcon = GetSystemMetrics(SM_CXICON);
+    int cyIcon = GetSystemMetrics(SM_CYICON);
+    CRect rect;
+    GetClientRect(&rect);
+    int x = (rect.Width() - cxIcon + 1) / 2;
+    int y = (rect.Height() - cyIcon + 1) / 2;
+
+    // アイコンの描画
+    dc.DrawIcon(x, y, m_hIcon);
+  }
+  else
+  {
+    displayReceivedData(*this, data_);
+    CDialog::OnPaint();
+  }
+}
+
+// ユーザーが最小化したウィンドウをドラッグしているときに表示するカーソルを取得するために、
+//  システムがこの関数を呼び出します。
+HCURSOR CRRD1SampleDlg::OnQueryDragIcon()
+{
+  return static_cast<HCURSOR>(m_hIcon);
+}
+
+//オブジェクトの後始末
+void closeHandles(CRRD1SampleDlg& p)
+{
+  if (p.timerID_) {
+    p.KillTimer(p.timerID_);
+    p.timerID_ = 0;
+  }
+  if (p.thread_.joinable()) {
+    p.stop_thread_->SetEvent();
+    p.thread_.join();
+  }
+  if (p.event_) {
+    p.event_ = nullptr;
+  }
+  if (p.stop_thread_) {
+    p.stop_thread_ = nullptr;
+  }
+}
+
+//接続が解除されたときのコールバック関数
+VOID WINAPI callbackDisconnect(VOID* _p, VOID*)
+{
+  CRRD1SampleDlg* p = reinterpret_cast<CRRD1SampleDlg*>(_p);
+
+  UTWSCloseDevice(p->hRRD_);
+  p->hRRD_ = 0;
+  p->MessageBox("ドングルが抜けました．ハンドルは閉じられます．");
+  CloseHandle(*p);
+}
+
+void CRRD1SampleDlg::OnBnClickedButtonOpen()
+{
+  hRRD_ = UTWSOpenDevice(UTWS_RRD_1, 0);
+  char buffer[256];
+  UTWSGetErrorMessage(hRRD_, buffer, 256);
+  editOpenStatus_.SetWindowText(buffer);
+  if (hRRD_)
+    UTWSRRD1SetCallBackDisconnect(hRRD_, callbackDisconnect, this);
+}
+
+void CRRD1SampleDlg::OnBnClickedButtonClose()
+{
+  closeHandles(*this);
+  UTWSCloseDevice(hRRD_);
+  hRRD_ = 0;
+  char buffer[256];
+  UTWSGetErrorMessage(0, buffer, 256);
+  editCloseStatus_.SetWindowText(buffer);
+}
+
+void CRRD1SampleDlg::OnClose()
+{
+  OnBnClickedButtonClose();
+  CDialog::OnClose();
+}
+
+void CRRD1SampleDlg::OnBnClickedButtonGetAddress()
+{
+  CHAR address[11];
+  if (UTWSRRD1GetLocalAddress(hRRD_, address)) {
+    editAddress_.SetWindowText(address);
+  }
+  else {
+    editAddress_.SetWindowText("失敗しました");
+  }
+}
+
+void CRRD1SampleDlg::OnBnClickedButtonSetAddress()
+{
+  using namespace std;
+
+  size_t n = editAddress_.GetWindowTextLength();
+  vector<CHAR> buf(n + 1);
+  editAddress_.GetWindowText(&buf[0], buf.size());
+
+  if (UTWSRRD1SetLocalAddress(hRRD_, &buf[0])) {
+    MessageBox("設定しました．");
+  }
+  else {
+    UINT err_id = UTWSGetErrorMessage(hRRD_, 0, 0);
+    if (UTWS_ERR_BAD_DESTINATION_ADDRESS == err_id) {
+      MessageBox("宛先アドレスが間違っています．");
+    }
+    else {
+      MessageBox("失敗しました．");
+    }
+  }
+}
+
+int recievingMethod(CRRD1SampleDlg& p)
+{
+  if (p.radioTimer_.GetCheck())
+    return 0;
+  if (p.radioEvent_.GetCheck())
+    return 1;
+  return 2;
+}
+
+//受信をイベントで検知するスレッド
+void thread_event(CRRD1SampleDlg* p)
+{
+  while (true) {
+    if (WAIT_OBJECT_0 == WaitForSingleObject(*p->stop_thread_, 0)) {
+      return;
+    }
+    if (WAIT_OBJECT_0 == WaitForSingleObject(*p->event_, 1)) {
+      p->event_->ResetEvent();
+      if (WAIT_OBJECT_0 == WaitForSingleObject(*p->stop_thread_, 0)) {
+        return;
+      }
+      if (UTWSRRD1GetDataEx(p->hRRD_, &p->data_)) {
+        p->SendMessage(WM_PAINT);
+      }
+    }
+  }
+}
+
+//コールバック関数
+VOID CALLBACK callbackRecieved(VOID* _p, VOID* _h)
+{
+  CRRD1SampleDlg* p = reinterpret_cast<CRRD1SampleDlg*>(_p);
+
+  UINT count = 0;
+  while (-1 != (count = UTWSRRD1DataCount(p->hRRD_)) && count) {
+    UTWSRRD1GetDataEx(p->hRRD_, &p->data_);
+    p->SendMessage(WM_PAINT);
+  }
+}
+
+void CRRD1SampleDlg::OnBnClickedButtonStart()
+{
+  using namespace std;
+
+  for_each(wndECG_.begin(), wndECG_.end(), [](auto* p) {p->SetWindowText(""); });
+  for_each(wndTemp_.begin(), wndTemp_.end(), [](auto* p) {p->SetWindowText(""); });
+  for_each(wndAccX_.begin(), wndAccX_.end(), [](auto* p) {p->SetWindowText(""); });
+  for_each(wndAccY_.begin(), wndAccY_.end(), [](auto* p) {p->SetWindowText(""); });
+  for_each(wndAccZ_.begin(), wndAccZ_.end(), [](auto* p) {p->SetWindowText(""); });
+
+  if (!hRRD_) {
+    MessageBox("RDD-1をオープンしていません");
+    return;
+  }
+
+  //受信停止させ、ハンドル類をクローズしておく
+  UTWSRRD1StopReceiving(hRRD_);
+  closeHandles(*this);
+
+  switch (recievingMethod(*this)) {
+  case 0:
+    SetTimer(timerID_ = 100, 1, 0);
+    UTWSRRD1StartReceiving(hRRD_, 0, 0, 0);
+    break;
+
+  case 1:
+    event_ = make_shared<CEvent>(FALSE, TRUE);
+    stop_thread_ = make_shared<CEvent>(FALSE, TRUE);
+    UTWSRRD1StartReceiving(hRRD_, *event_, 0, 0);
+    thread_ = thread(thread_event, this);
+    break;
+
+  case 2:
+    UTWSRRD1StartReceiving(hRRD_, 0, callbackRecieved, this);
+    break;
+
+  default:
+    return;
+  }
+}
+
+void CRRD1SampleDlg::OnBnClickedButtonStop()
+{
+  if (!hRRD_)
+    return;
+  UTWSRRD1StopReceiving(hRRD_);
+  closeHandles(*this);
+}
+
+void CRRD1SampleDlg::OnTimer(UINT_PTR nIDEvent)
+{
+  UINT count = 0;
+  if (-1 != (count = UTWSRRD1DataCount(hRRD_)) && count)
+  {
+    UTWSRRD1GetDataEx(hRRD_, &data_);
+    SendMessage(WM_PAINT);
+  }
+
+  CDialog::OnTimer(nIDEvent);
+}
+</file>
+
+<file path="WHS-1/Software Development Kit/RRD1Sample/RRD1SampleDlg.h">
+// RRD1SampleDlg.h : ヘッダー ファイル
+//
+
+#pragma once
+
+// CRRD1SampleDlg ダイアログ
+class CRRD1SampleDlg : public CDialog
+{
+  // コンストラクション
+public:
+  CRRD1SampleDlg(CWnd* pParent = nullptr);	// 標準コンストラクター
+
+// ダイアログ データ
+#ifdef AFX_DESIGN_TIME
+  enum { IDD = IDD_RRD1SAMPLE_DIALOG };
+#endif
+
+protected:
+  virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV サポート
+
+// 実装
+protected:
+  HICON m_hIcon;
+
+  // 生成された、メッセージ割り当て関数
+  virtual BOOL OnInitDialog();
+  afx_msg void OnPaint();
+  afx_msg HCURSOR OnQueryDragIcon();
+  DECLARE_MESSAGE_MAP()
+public:
+  //RDD-1のハンドル
+  HANDLE hRRD_;
+  //受信イベント
+  std::shared_ptr<CEvent> event_;
+  //受信タイマー
+  UINT_PTR timerID_;
+  //イベント受信のための受信スレッド
+  std::thread thread_;
+  //受信スレッド停止イベント
+  std::shared_ptr<CEvent> stop_thread_;
+  //受信データ表示のstaticをvectorでまとめる
+  std::vector<CStatic*> wndECG_;
+  std::vector<CStatic*> wndTemp_;
+  std::vector<CStatic*> wndAccX_;
+  std::vector<CStatic*> wndAccY_;
+  std::vector<CStatic*> wndAccZ_;
+  //受信データ
+  RRD1DataEx data_;
+
+  CButton radioTimer_;
+  CButton radioEvent_;
+  CButton radioCallBack_;
+  CStatic editOpenStatus_;
+  CStatic editCloseStatus_;
+  CEdit editAddress_;
+  CStatic staticHeader_;
+  CStatic sendID_;
+  CStatic tempID_;
+  CStatic staticECG1_;
+  CStatic staticECG2_;
+  CStatic staticECG3_;
+  CStatic staticECG4_;
+  CStatic staticECG5_;
+  CStatic staticTemp1_;
+  CStatic staticTemp2_;
+  CStatic staticTemp3_;
+  CStatic staticTemp4_;
+  CStatic staticTemp5_;
+  CStatic staticAccX1_;
+  CStatic staticAccX2_;
+  CStatic staticAccX3_;
+  CStatic staticAccX4_;
+  CStatic staticAccX5_;
+  CStatic staticAccY1_;
+  CStatic staticAccY2_;
+  CStatic staticAccY3_;
+  CStatic staticAccY4_;
+  CStatic staticAccY5_;
+  CStatic staticAccZ1_;
+  CStatic staticAccZ2_;
+  CStatic staticAccZ3_;
+  CStatic staticAccZ4_;
+  CStatic staticAccZ5_;
+  CStatic staticEcgMode_;
+  afx_msg void OnBnClickedButtonOpen();
+  afx_msg void OnBnClickedButtonClose();
+  afx_msg void OnClose();
+  afx_msg void OnBnClickedButtonGetAddress();
+  afx_msg void OnBnClickedButtonSetAddress();
+  afx_msg void OnBnClickedButtonStart();
+  afx_msg void OnBnClickedButtonStop();
+  afx_msg void OnTimer(UINT_PTR nIDEvent);
+};
+</file>
+
+<file path="WHS-1/Software Development Kit/RRD1Sample/targetver.h">
+#pragma once
+
+// SDKDDKVer.h をインクルードすると、利用できる最も上位の Windows プラットフォームが定義されます。
+
+// 以前の Windows プラットフォーム用にアプリケーションをビルドする場合は、WinSDKVer.h をインクルードし、
+// SDKDDKVer.h をインクルードする前に、サポート対象とするプラットフォームを示すように _WIN32_WINNT マクロを設定します。
+
+#include <SDKDDKVer.h>
+</file>
+
+<file path="WHS-1/Software Development Kit/WHS1Sample/framework.h">
+#pragma once
+
+#ifndef VC_EXTRALEAN
+#define VC_EXTRALEAN            // Windows ヘッダーから使用されていない部分を除外します。
+#endif
+
+#include "targetver.h"
+
+#define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS      // 一部の CString コンストラクターは明示的です。
+
+// 一般的で無視しても安全な MFC の警告メッセージの一部の非表示を解除します。
+#define _AFX_ALL_WARNINGS
+
+#include <afxwin.h>         // MFC のコアおよび標準コンポーネント
+#include <afxext.h>         // MFC の拡張部分
+
+#ifndef _AFX_NO_OLE_SUPPORT
+#include <afxdtctl.h>           // MFC の Internet Explorer 4 コモン コントロール サポート
+#endif
+#ifndef _AFX_NO_AFXCMN_SUPPORT
+#include <afxcmn.h>             // MFC の Windows コモン コントロール サポート
+#endif // _AFX_NO_AFXCMN_SUPPORT
+
+#include <afxcontrolbars.h>     // MFC におけるリボンとコントロール バーのサポート
+</file>
+
+<file path="WHS-1/Software Development Kit/WHS1Sample/pch.cpp">
+#include "pch.h"
+</file>
+
+<file path="WHS-1/Software Development Kit/WHS1Sample/pch.h">
+#ifndef PCH_H
+#define PCH_H
+
+#include <mutex>
+#include <condition_variable>
+#include <chrono>
+#include <thread>
+#include <sstream>
+#include <iomanip>
+#include <vector>
+#include <algorithm>
+
+#ifdef _WIN64
+#pragma comment(lib, "../x64/utws.lib")
+#else
+#pragma comment(lib, "../x86/utws.lib")
+#endif
+
+#include "framework.h"
+#include "../include/utwsapi.h"
+
+#endif //PCH_H
+</file>
+
+<file path="WHS-1/Software Development Kit/WHS1Sample/resource.h">
+//{{NO_DEPENDENCIES}}
+// Microsoft Visual C++ で生成されたインクルード ファイル。
+// WHS1Sample.rc で使用
+//
+#define IDD_WHS1SAMPLE_DIALOG           102
+#define IDR_MAINFRAME                   128
+#define IDC_EDIT_TEMPID                 1000
+#define IDC_RADIO_RF                    1001
+#define IDC_RADIO_MEMORY                1002
+#define IDC_CHECK_UPDATE_WITH_BEAT      1003
+#define IDC_RADIO_WAVE                  1004
+#define IDC_RADIO_RRI                   1005
+#define IDC_RADIO_HR                    1006
+#define IDC_CHECK_MONITOR               1007
+#define IDC_RADIO_ACC_PEAK_HOLD         1008
+#define IDC_RADIO_ACC_AVERAGE           1009
+#define IDC_STATIC_ACC_GROUP            1010
+#define IDC_RADIO_OVER_WRITE            1011
+#define IDC_STATIC_MEMORY_GROUP         1012
+#define IDC_RADIO_MEMORY_STOP           1013
+#define IDC_STATIC_TIME                 1014
+#define IDC_EDIT_FWVERSION              1015
+#define IDC_EDIT_TEMP_OFFSET            1016
+#define IDC_STATIC_TEMP_OFFSET          1017
+#define IDC_BUTTON_READ                 1018
+#define IDC_EDIT_FLUSH_WRITE_COUNT      1019
+#define IDC_EDIT_SERIAL_NO              1020
+#define IDC_EDIT_CPU_ID                 1021
+#define IDC_BUTTON_WRITE                1022
+#define IDC_BUTTON_MEMORY               1023
+#define IDC_BUTTON_ASYNC_READ           1024
+#define IDC_BUTTON_BINTOCSV             1025
+#define IDC_STATIC_STATUS               1026
+#define IDC_EDIT_BLOCK_SIZE             1027
+#define IDC_EDIT_SEND_ADDRESS           1031
+#define IDC_BUTTON_SEND_ADDRES          1032
+
+// Next default values for new objects
+// 
+#ifdef APSTUDIO_INVOKED
+#ifndef APSTUDIO_READONLY_SYMBOLS
+#define _APS_NEXT_RESOURCE_VALUE        130
+#define _APS_NEXT_COMMAND_VALUE         32771
+#define _APS_NEXT_CONTROL_VALUE         1033
+#define _APS_NEXT_SYMED_VALUE           101
+#endif
+#endif
+</file>
+
+<file path="WHS-1/Software Development Kit/WHS1Sample/targetver.h">
+#pragma once
+
+// SDKDDKVer.h をインクルードすると、利用できる最も上位の Windows プラットフォームが定義されます。
+
+// 以前の Windows プラットフォーム用にアプリケーションをビルドする場合は、WinSDKVer.h をインクルードし、
+// SDKDDKVer.h をインクルードする前に、サポート対象とするプラットフォームを示すように _WIN32_WINNT マクロを設定します。
+
+#include <SDKDDKVer.h>
+</file>
+
+<file path="WHS-1/Software Development Kit/WHS1Sample/WHS1Sample.cpp">
+// WHS1Sample.cpp : アプリケーションのクラス動作を定義します。
+//
+
+#include "pch.h"
+#include "framework.h"
+#include "WHS1Sample.h"
+#include "WHS1SampleDlg.h"
+
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
+
+// CWHS1SampleApp
+
+BEGIN_MESSAGE_MAP(CWHS1SampleApp, CWinApp)
+  ON_COMMAND(ID_HELP, &CWinApp::OnHelp)
+END_MESSAGE_MAP()
+
+// CWHS1SampleApp の構築
+
+CWHS1SampleApp::CWHS1SampleApp()
+{
+}
+
+// 唯一の CWHS1SampleApp オブジェクト
+
+CWHS1SampleApp theApp;
+
+// CWHS1SampleApp の初期化
+
+BOOL CWHS1SampleApp::InitInstance()
+{
+  CWinApp::InitInstance();
+
+  CWHS1SampleDlg dlg;
+  m_pMainWnd = &dlg;
+  INT_PTR nResponse = dlg.DoModal();
+  if (nResponse == IDOK)
+  {
+  }
+  else if (nResponse == IDCANCEL)
+  {
+  }
+  else if (nResponse == -1)
+  {
+    TRACE(traceAppMsg, 0, "警告: ダイアログの作成に失敗しました。アプリケーションは予期せずに終了します。\n");
+    TRACE(traceAppMsg, 0, "警告: ダイアログで MFC コントロールを使用している場合、#define _AFX_NO_MFC_CONTROLS_IN_DIALOGS を指定できません。\n");
+  }
+
+#if !defined(_AFXDLL) && !defined(_AFX_NO_MFC_CONTROLS_IN_DIALOGS)
+  ControlBarCleanUp();
+#endif
+
+  // ダイアログは閉じられました。アプリケーションのメッセージ ポンプを開始しないで
+  //  アプリケーションを終了するために FALSE を返してください。
+  return FALSE;
+}
+</file>
+
+<file path="WHS-1/Software Development Kit/WHS1Sample/WHS1Sample.h">
+// WHS1Sample.h : PROJECT_NAME アプリケーションのメイン ヘッダー ファイルです
+//
+
+#pragma once
+
+#ifndef __AFXWIN_H__
+	#error "PCH に対してこのファイルをインクルードする前に 'pch.h' をインクルードしてください"
+#endif
+
+#include "resource.h"		// メイン シンボル
+
+
+// CWHS1SampleApp:
+// このクラスの実装については、WHS1Sample.cpp を参照してください
+//
+
+class CWHS1SampleApp : public CWinApp
+{
+public:
+	CWHS1SampleApp();
+
+// オーバーライド
+public:
+	virtual BOOL InitInstance();
+
+// 実装
+
+	DECLARE_MESSAGE_MAP()
+};
+
+extern CWHS1SampleApp theApp;
+</file>
+
+<file path="WHS-1/Software Development Kit/WHS1Sample/WHS1Sample.vcxproj">
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{8C9983E5-D9E7-456C-B0FE-70C13F5F4C90}</ProjectGuid>
+    <Keyword>MFCProj</Keyword>
+    <RootNamespace>WHS1Sample</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>Static</UseOfMfc>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Platform)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Platform)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)x86\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Platform)\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+    <Midl>
+      <MkTypLibCompatible>false</MkTypLibCompatible>
+      <ValidateAllParameters>true</ValidateAllParameters>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0411</Culture>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+    <Midl>
+      <MkTypLibCompatible>false</MkTypLibCompatible>
+      <ValidateAllParameters>true</ValidateAllParameters>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0411</Culture>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <Midl>
+      <MkTypLibCompatible>false</MkTypLibCompatible>
+      <ValidateAllParameters>true</ValidateAllParameters>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0411</Culture>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+    <Midl>
+      <MkTypLibCompatible>false</MkTypLibCompatible>
+      <ValidateAllParameters>true</ValidateAllParameters>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0411</Culture>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="framework.h" />
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="WHS1Sample.h" />
+    <ClInclude Include="WHS1SampleDlg.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="WHS1Sample.cpp" />
+    <ClCompile Include="WHS1SampleDlg.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="WHS1Sample.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\WHS1Sample.rc2" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\WHS1Sample.ico" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
+</file>
+
+<file path="WHS-1/Software Development Kit/WHS1Sample/WHS1Sample.vcxproj.filters">
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="ソース ファイル">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="ヘッダー ファイル">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="リソース ファイル">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="WHS1Sample.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="WHS1SampleDlg.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="framework.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="WHS1Sample.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="WHS1SampleDlg.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="WHS1Sample.rc">
+      <Filter>リソース ファイル</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\WHS1Sample.rc2">
+      <Filter>リソース ファイル</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\WHS1Sample.ico">
+      <Filter>リソース ファイル</Filter>
+    </Image>
+  </ItemGroup>
+</Project>
+</file>
+
+<file path="WHS-1/Software Development Kit/WHS1Sample/WHS1Sample.vcxproj.user">
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup />
+</Project>
+</file>
+
+<file path="WHS-1/Software Development Kit/WHS1Sample/WHS1SampleDlg.cpp">
+// WHS1SampleDlg.cpp : 実装ファイル
+//
+
+#include "pch.h"
+#include "framework.h"
+#include "WHS1Sample.h"
+#include "WHS1SampleDlg.h"
+#include "afxdialogex.h"
+
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
+
+//時計の更新
+CEvent timeUpdate_mutex(TRUE, TRUE);
+std::thread timeUpdate_thread;
+void timeUpdate(CStatic* _wnd)
+{
+  using namespace std;
+
+  while (WAIT_OBJECT_0 != WaitForSingleObject(timeUpdate_mutex ,10)) {
+    auto tp = chrono::system_clock::now();
+    time_t tt = chrono::system_clock::to_time_t(tp);
+    tm t;
+    localtime_s(&t, &tt);
+
+    stringstream ss;
+    ss << t.tm_year + 1900 << '/' << setw(2) << setfill('0') << t.tm_mon + 1 << '/'
+      << setw(2) << setfill('0') << t.tm_mday << ' '
+      << setw(2) << setfill('0') << t.tm_hour << ':'
+      << setw(2) << setfill('0') << t.tm_min << ':'
+      << setw(2) << setfill('0') << t.tm_sec;
+    _wnd->SetWindowText(ss.str().c_str());
+    _wnd->Invalidate(0);
+  }
+}
+
+//ErrorMessage
+void errorMessage(HANDLE _h, const std::string* _comment = 0)
+{
+  using namespace std;
+
+  char msg[1024];
+  UTWSGetErrorMessage(_h, msg, 1024);
+  string smsg(msg);
+  if (_comment)
+    smsg += string(" : ") + *_comment;
+  MessageBox(0, smsg.c_str(), "Error", MB_ICONINFORMATION);
+}
+
+//WHS-1が引き抜かれたときに呼び出されるコールバック関数
+void disconnected(void* _p)
+{
+  CWHS1SampleDlg* dlg = reinterpret_cast<CWHS1SampleDlg*>(_p);
+  dlg->staticStatus_.SetWindowText("WHS-1が抜き取られました");
+  UTWSCloseDevice(dlg->hwhs_);
+  dlg->hwhs_ = 0;
+}
+
+//以下の関数を実行するスレッドオブジェクト
+std::thread download_thread;
+//非同期フラッシュ読み出し時の、読み出しブロック数表示
+void monitor(CWHS1SampleDlg* _p)
+{
+  using namespace std;
+
+  this_thread::sleep_for(chrono::microseconds(100));
+  while (true) {
+    UINT n, d;
+    if (UTWSWHS1ReadSize(_p->hwhs_, &n, &d)) {
+      stringstream s;
+      s << n << " / " << d;
+      _p->staticStatus_.SetWindowText(s.str().c_str());
+    }
+    if (WAIT_OBJECT_0 == WaitForSingleObject(_p->download_event_, 20)) {
+      break;
+    }
+  }
+}
+
+//ファイルを保存したときtrue
+bool saveData(CWHS1SampleDlg& _w)
+{
+  using namespace std;
+
+  UINT buf_size;
+  if (!UTWSWHS1GetMemoryBinarySize(_w.hwhs_, &buf_size)) {
+    string msg("読み取ったメモリのサイズを取得できません");
+    errorMessage(_w.hwhs_, &msg);
+    _w.staticStatus_.SetWindowText(msg.c_str());
+    return false;
+  }
+
+  vector<BYTE> bd(buf_size);
+  if (!UTWSWHS1GetMemoryBinary(_w.hwhs_, &bd[0], bd.size())) {
+    string msg("読み取ったメモリをメイン側へコピーできませんでした");
+    errorMessage(_w.hwhs_, &msg);
+    _w.staticStatus_.SetWindowText(msg.c_str());
+    return false;
+  }
+
+  //時刻補完を有効にする
+  BOOL time_adjust = TRUE;
+
+  //バイナリデータを操作するため、ハンドルを生成する
+  HANDLE hbin;
+  if (!(hbin = UTWSOpenDevice(UTWS_WHS_1_BINARYDATA, 0))) {
+    string msg("バイナリデータを操作するためのハンドルを生成できません。");
+    errorMessage(0, &msg);
+    _w.staticStatus_.SetWindowText(msg.c_str());
+    return false;
+  }
+  if (-1 == UTWSWHS1BinaryToData(hbin, &bd[0], bd.size(), time_adjust, FALSE)) {
+    string msg("バイナリデータを生体情報に変換できません。");
+    errorMessage(hbin, &msg);
+    _w.staticStatus_.SetWindowText(msg.c_str());
+    return false;
+  }
+
+  CFileDialog fdg(FALSE);
+  INT_PTR res = fdg.DoModal();
+  if (IDOK == res) {
+    string path = static_cast<const char*>(fdg.GetPathName());
+    //生体情報に変換されたバイナリデータをファイルへCSVファイルとして保存する.
+    if (!UTWSWHS1SaveDataFromBinary(hbin, path.c_str())) {
+      string msg("CSVファイルを保存できませんでした。");
+      errorMessage(hbin, &msg);
+      _w.staticStatus_.SetWindowText(msg.c_str());
+      return false;
+    }
+    //バイナリファイルとして保存する
+    path += ".bin";
+    if (!UTWSWHS1SaveMemoryBinary(_w.hwhs_, path.c_str())) {
+      string msg("バイナリファイルを保存できませんでした。");
+      errorMessage(_w.hwhs_, &msg);
+      _w.staticStatus_.SetWindowText(msg.c_str());
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+//非同期読み出し完了時のコールバック
+void asynchronousReadCallback(void* _p)
+{
+  using namespace std;
+
+  CWHS1SampleDlg* p = reinterpret_cast<CWHS1SampleDlg*>(_p);
+  if (download_thread.joinable())
+    download_thread.join();
+
+  string msg;
+  switch (UTWSWHS1ReadMemoryBinaryResult(p->hwhs_)) {
+  case UTWS_NO_ERR:
+    //データのセーブ
+    if (saveData(*p))
+      p->staticStatus_.SetWindowText("ファイルを保存しました");
+    else
+      p->staticStatus_.SetWindowText("ファイルは保存されていません");
+    return;
+    break;
+  case UTWS_ERR_FAILED:
+    msg = "失敗しました";
+    break;
+  case UTWS_ERR_TIMEOUT:
+    msg = "タイムアウトです";
+    break;
+  case UTWS_ERR_INVALID_HANDLE:
+    msg = "ハンドルが無効です";
+    break;
+  default:
+    msg = "原因不明のエラーです";
+    break;
+  }
+  errorMessage(p->hwhs_, &msg);
+  p->staticStatus_.SetWindowText(msg.c_str());
+}
+
+// CWHS1SampleDlg ダイアログ
+
+CWHS1SampleDlg::CWHS1SampleDlg(CWnd* pParent /*=nullptr*/)
+  : hwhs_(0)
+  , download_event_(TRUE, TRUE)
+  , items_(0)
+  , editTempID_()
+  , radioRF_()
+  , radioMemory_()
+  , radioWave_()
+  , radioRRI_()
+  , radioHR_()
+  , chkUpdateWithBeat_()
+  , chkMonitor_()
+  , radioAccPeakHold_()
+  , radioACCAverage_()
+  , radioOverWrite_()
+  , radioMemoryStop_()
+  , editFWVersion_()
+  , staticTempOffset_()
+  , editFlushWriteCount_()
+  , editSerialNo_()
+  , editCPUID_()
+  , editBlockSize_()
+  , staticStatus_()
+  , groupACC_()
+  , groupMemory_()
+  , staticTime_()
+  , editDestinationAddress_()
+  , editTempOffset_()
+  , CDialog(IDD_WHS1SAMPLE_DIALOG, pParent)
+{
+  m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+  //全ダイアログアイテムの登録
+  items_.push_back(&editTempID_);
+  items_.push_back(&radioRF_);
+  items_.push_back(&radioMemory_);
+  items_.push_back(&radioWave_);
+  items_.push_back(&radioRRI_);
+  items_.push_back(&radioHR_);
+  items_.push_back(&chkUpdateWithBeat_);
+  items_.push_back(&chkMonitor_);
+  items_.push_back(&radioAccPeakHold_);
+  items_.push_back(&radioACCAverage_);
+  items_.push_back(&radioOverWrite_);
+  items_.push_back(&radioMemoryStop_);
+  items_.push_back(&editFWVersion_);
+  items_.push_back(&staticTempOffset_);
+  items_.push_back(&editFlushWriteCount_);
+  items_.push_back(&editSerialNo_);
+  items_.push_back(&editCPUID_);
+  items_.push_back(&editBlockSize_);
+  items_.push_back(&staticStatus_);
+  items_.push_back(&groupACC_);
+  items_.push_back(&groupMemory_);
+  items_.push_back(&staticTime_);
+  items_.push_back(&editDestinationAddress_);
+  items_.push_back(&editTempOffset_);
+}
+
+void CWHS1SampleDlg::DoDataExchange(CDataExchange* pDX)
+{
+  CDialog::DoDataExchange(pDX);
+  DDX_Control(pDX, IDC_EDIT_TEMPID, editTempID_);
+  DDX_Control(pDX, IDC_RADIO_RF, radioRF_);
+  DDX_Control(pDX, IDC_RADIO_MEMORY, radioMemory_);
+  DDX_Control(pDX, IDC_RADIO_WAVE, radioWave_);
+  DDX_Control(pDX, IDC_RADIO_RRI, radioRRI_);
+  DDX_Control(pDX, IDC_RADIO_HR, radioHR_);
+  DDX_Control(pDX, IDC_CHECK_UPDATE_WITH_BEAT, chkUpdateWithBeat_);
+  DDX_Control(pDX, IDC_CHECK_MONITOR, chkMonitor_);
+  DDX_Control(pDX, IDC_RADIO_ACC_PEAK_HOLD, radioAccPeakHold_);
+  DDX_Control(pDX, IDC_RADIO_ACC_AVERAGE, radioACCAverage_);
+  DDX_Control(pDX, IDC_RADIO_OVER_WRITE, radioOverWrite_);
+  DDX_Control(pDX, IDC_RADIO_MEMORY_STOP, radioMemoryStop_);
+  DDX_Control(pDX, IDC_EDIT_FWVERSION, editFWVersion_);
+  DDX_Control(pDX, IDC_STATIC_TEMP_OFFSET, staticTempOffset_);
+  DDX_Control(pDX, IDC_EDIT_FLUSH_WRITE_COUNT, editFlushWriteCount_);
+  DDX_Control(pDX, IDC_EDIT_SERIAL_NO, editSerialNo_);
+  DDX_Control(pDX, IDC_EDIT_CPU_ID, editCPUID_);
+  DDX_Control(pDX, IDC_EDIT_BLOCK_SIZE, editBlockSize_);
+  DDX_Control(pDX, IDC_STATIC_STATUS, staticStatus_);
+  DDX_Control(pDX, IDC_STATIC_ACC_GROUP, groupACC_);
+  DDX_Control(pDX, IDC_STATIC_MEMORY_GROUP, groupMemory_);
+  DDX_Control(pDX, IDC_STATIC_TIME, staticTime_);
+  DDX_Control(pDX, IDC_EDIT_SEND_ADDRESS, editDestinationAddress_);
+  DDX_Control(pDX, IDC_EDIT_TEMP_OFFSET, editTempOffset_);
+}
+
+BEGIN_MESSAGE_MAP(CWHS1SampleDlg, CDialog)
+  ON_WM_PAINT()
+  ON_WM_QUERYDRAGICON()
+  ON_WM_CLOSE()
+  ON_BN_CLICKED(IDC_BUTTON_READ, &CWHS1SampleDlg::OnBnClickedButtonRead)
+  ON_BN_CLICKED(IDC_BUTTON_WRITE, &CWHS1SampleDlg::OnBnClickedButtonWrite)
+  ON_BN_CLICKED(IDC_BUTTON_MEMORY, &CWHS1SampleDlg::OnBnClickedButtonMemory)
+  ON_BN_CLICKED(IDC_BUTTON_ASYNC_READ, &CWHS1SampleDlg::OnBnClickedButtonAsyncRead)
+  ON_BN_CLICKED(IDC_BUTTON_BINTOCSV, &CWHS1SampleDlg::OnBnClickedButtonBintocsv)
+  ON_BN_CLICKED(IDC_BUTTON_SEND_ADDRES, &CWHS1SampleDlg::OnBnClickedButtonSendAddres)
+END_MESSAGE_MAP()
+
+// CWHS1SampleDlg メッセージ ハンドラー
+
+BOOL CWHS1SampleDlg::OnInitDialog()
+{
+  using namespace std;
+
+  CDialog::OnInitDialog();
+
+  // このダイアログのアイコンを設定します。アプリケーションのメイン ウィンドウがダイアログでない場合、
+  //  Framework は、この設定を自動的に行います。
+  SetIcon(m_hIcon, TRUE);			// 大きいアイコンの設定
+  SetIcon(m_hIcon, FALSE);		// 小さいアイコンの設定
+
+  // 時計の開始
+  timeUpdate_thread = thread(timeUpdate, &staticTime_);
+
+  //接続数を調べる タイムアウト1秒
+  UINT count = UTWSWHS1CountConnected(1, 1000);
+  if (!count) {
+    staticStatus_.SetWindowText("WHS-1が接続されていません．");
+    return TRUE;
+  }
+  else if (-1 == count) {
+    string msg("接続時のエラー．");
+    errorMessage(0, &msg);
+    return TRUE;
+  }
+
+  //1台目を開く
+  hwhs_ = UTWSOpenDevice(UTWS_WHS_1, 0);
+  if (!hwhs_) {
+    string msg("開けませんでした.");
+    errorMessage(0, &msg);
+    staticStatus_.SetWindowText(msg.c_str());
+    return TRUE;
+  }
+  else {
+    //設定情報の表示
+    updateConfig();
+    //WHS-1抜き取りを検出するコールバック関数登録
+    if (!UTWSWHS1SetCallBackDisconnect(hwhs_, disconnected, this)) {
+      string msg("コールバック関数を登録できませんでした．");
+      errorMessage(hwhs_, &msg);
+      return TRUE;
+    }
+  }
+
+  return TRUE;  // フォーカスをコントロールに設定した場合を除き、TRUE を返します。
+}
+
+// ダイアログに最小化ボタンを追加する場合、アイコンを描画するための
+//  下のコードが必要です。ドキュメント/ビュー モデルを使う MFC アプリケーションの場合、
+//  これは、Framework によって自動的に設定されます。
+
+void CWHS1SampleDlg::OnPaint()
+{
+  if (IsIconic())
+  {
+    CPaintDC dc(this); // 描画のデバイス コンテキスト
+
+    SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
+
+    // クライアントの四角形領域内の中央
+    int cxIcon = GetSystemMetrics(SM_CXICON);
+    int cyIcon = GetSystemMetrics(SM_CYICON);
+    CRect rect;
+    GetClientRect(&rect);
+    int x = (rect.Width() - cxIcon + 1) / 2;
+    int y = (rect.Height() - cyIcon + 1) / 2;
+
+    // アイコンの描画
+    dc.DrawIcon(x, y, m_hIcon);
+  }
+  else
+  {
+    CDialog::OnPaint();
+  }
+}
+
+// ユーザーが最小化したウィンドウをドラッグしているときに表示するカーソルを取得するために、
+//  システムがこの関数を呼び出します。
+HCURSOR CWHS1SampleDlg::OnQueryDragIcon()
+{
+  return static_cast<HCURSOR>(m_hIcon);
+}
+
+void CWHS1SampleDlg::OnClose()
+{
+  //非同期読み込み中ならばこの完了を待ちます
+  // (ここでは記述しませんがしていませんが）
+
+  //時計表示の終了
+  if (timeUpdate_thread.joinable()) {
+    timeUpdate_mutex.SetEvent();
+    timeUpdate_thread.join();
+  }
+
+  //非同期読み込みモニターが動作していれば完了を待つ
+  if (download_thread.joinable())
+    download_thread.join();
+  //WHS-1をクローズする
+  UTWSCloseDevice(hwhs_);
+
+  CDialog::OnClose();
+}
+
+//設定情報の更新
+void CWHS1SampleDlg::updateConfig()
+{
+  using namespace std;
+
+  //WHS-1のバージョンチェック
+  //バージョンに応じてダイアログアイテムをEnableする．
+  UINT ver;
+  if (!UTWSWHS1Version(hwhs_, &ver)) {
+    string msg("WHS-1の設定情報を取得できませんでした");
+    errorMessage(hwhs_, &msg);
+    staticStatus_.SetWindowText(msg.c_str());
+    return;
+  }
+  editFWVersion_.SetWindowText(to_string(ver).c_str());
+  //いったん全てのダイアログアイテムをEnableにする
+  for_each(items_.begin(), items_.end(), [](CWnd* p) {p->EnableWindow(); });
+  if (ver < 500 /*旧WHS-1*/) {
+    chkMonitor_.EnableWindow(FALSE);
+  }
+  else {//新WHS-1
+    radioHR_.EnableWindow(FALSE);
+    groupACC_.EnableWindow(FALSE);
+    radioACCAverage_.EnableWindow(FALSE);
+    radioAccPeakHold_.EnableWindow(FALSE);
+    groupMemory_.EnableWindow(FALSE);
+    radioOverWrite_.EnableWindow(FALSE);
+    radioMemoryStop_.EnableWindow(FALSE);
+    staticTempOffset_.EnableWindow(FALSE);
+    editTempID_.EnableWindow(FALSE);
+  }
+
+  //情報取得
+  WHS1Config cnf;
+  if (!UTWSWHS1ReadConfig(hwhs_, &cnf)) {
+    string msg("WHS-1の設定情報を取得できませんでした");
+    errorMessage(hwhs_, &msg);
+    staticStatus_.SetWindowText(msg.c_str());
+    return;
+  }
+
+  //情報の表示
+  editTempID_.SetWindowText(to_string(cnf.temp_id).c_str());
+  //0 : 無線モード 1: メモリモード
+  if (cnf.mode == 0) {
+    radioRF_.SetCheck(BST_CHECKED);
+    radioMemory_.SetCheck(BST_UNCHECKED);
+  }
+  else {
+    radioRF_.SetCheck(BST_UNCHECKED);
+    radioMemory_.SetCheck(BST_CHECKED);
+  }
+  //モニタモード
+  chkMonitor_.SetCheck(cnf.monitor_mode == 1 ? BST_CHECKED : BST_UNCHECKED);
+
+  //1 : 心拍波形 2: 心拍間隔 1000Hz 3: 心拍間隔 (加速度1秒更新) 4: 心拍数データ
+  radioWave_.SetCheck(BST_UNCHECKED);
+  radioRRI_.SetCheck(BST_UNCHECKED);
+  radioHR_.SetCheck(BST_UNCHECKED);
+  chkUpdateWithBeat_.SetCheck(BST_UNCHECKED);
+  switch (cnf.ecg_mode) {
+  case 0x01:
+    radioWave_.SetCheck(BST_CHECKED);
+    break;
+  case 0x02:
+    radioRRI_.SetCheck(BST_CHECKED);
+    break;
+  case 0x03:
+    radioRRI_.SetCheck(BST_CHECKED);
+    chkUpdateWithBeat_.SetCheck(BST_CHECKED);
+    break;
+  case 0x04:
+    radioHR_.SetCheck(BST_CHECKED);
+    break;
+  default:
+    break;
+  }
+
+  //加速度モード  0:移動平均 1: ピークホールド
+  if (cnf.acc_mode == 0) {
+    radioACCAverage_.SetCheck(BST_CHECKED);
+    radioAccPeakHold_.SetCheck(BST_UNCHECKED);
+  }
+  else {
+    radioACCAverage_.SetCheck(BST_UNCHECKED);
+    radioAccPeakHold_.SetCheck(BST_CHECKED);
+  }
+  //メモリ書き込み方式 0:上書き 1:停止
+  if (cnf.mem_mode == 0) {
+    radioOverWrite_.SetCheck(BST_CHECKED);
+    radioMemoryStop_.SetCheck(BST_UNCHECKED);
+  }
+  else {
+    radioOverWrite_.SetCheck(BST_UNCHECKED);
+    radioMemoryStop_.SetCheck(BST_CHECKED);
+  }
+  editTempOffset_.SetWindowText(to_string(cnf.tmp_offset).c_str());
+  editFlushWriteCount_.SetWindowTextA(to_string(cnf.flush_write_count).c_str());
+  editSerialNo_.SetWindowText(to_string(cnf.set_serial_id).c_str());
+  editCPUID_.SetWindowText(to_string(cnf.cpu_id).c_str());
+
+  //フラッシュメモリに記録されたブロック数
+  UINT block_size;
+  if (!UTWSWHS1GetRecordedSize(hwhs_, &block_size)) {
+    string msg("フラッシュメモリに記録されたブロック数を取得できませんでした");
+    errorMessage(hwhs_, &msg);
+    staticStatus_.SetWindowText(msg.c_str());
+    return;
+  }
+  editBlockSize_.SetWindowText(to_string(block_size).c_str());
+
+  CHAR address[11];
+  if (!UTWSWHS1GetDestinationAddress(hwhs_, address)) {
+    string msg("WHS-1の宛先アドレスを取得できませんでした");
+    errorMessage(hwhs_, &msg);
+    staticStatus_.SetWindowText(msg.c_str());
+    return;
+  }
+  editDestinationAddress_.SetWindowText(address);
+
+  staticStatus_.SetWindowText("");
+}
+
+void CWHS1SampleDlg::OnBnClickedButtonRead()
+{
+  updateConfig();
+  staticStatus_.SetWindowText("設定を読み出しました");
+}
+
+//仮IDが正しいかどうかチェックする
+bool examineTempID(CWnd& _wnd, int* _val)
+{
+  using namespace std;
+
+  auto n = _wnd.GetWindowTextLength();
+  vector<char> buf(n + 1);
+  _wnd.GetWindowText(&buf[0], buf.size());
+
+  for (auto p = buf.begin(), ep = buf.end(); p != ep - 1; ++p) {
+    switch (*p) {
+    case '0': case '1': case '2': case '3': case '4': case '5':
+    case '6': case '7': case '8': case '9':
+      continue;
+    default:
+      return false;
+    }
+  }
+
+  *_val = atoi(&buf[0]);
+  return  (0 <= *_val && 255 >= *_val);
+}
+
+void CWHS1SampleDlg::OnBnClickedButtonWrite()
+{
+  using namespace std;
+
+  UINT ver;
+  if (!UTWSWHS1Version(hwhs_, &ver)) {
+    string msg("WHS-1のF/W Verを取得できません");
+    errorMessage(hwhs_, &msg);
+    staticStatus_.SetWindowText(msg.c_str());
+    return;
+  }
+
+  WHS1Config cnf;
+  ZeroMemory(&cnf, sizeof cnf);
+
+  cnf.mode = (BST_CHECKED == radioRF_.GetCheck()) ? 0 : 1;
+  if (BST_CHECKED == radioWave_.GetCheck()) {
+    cnf.ecg_mode = 1;
+  }
+  else if (BST_CHECKED == radioRRI_.GetCheck()) {
+    cnf.ecg_mode = (BST_CHECKED == chkUpdateWithBeat_.GetCheck()) ? 3 : 2;
+  }
+  else if (BST_CHECKED == radioHR_.GetCheck()) {
+    cnf.ecg_mode = 4;
+  }
+  else {
+    cnf.ecg_mode = 5;
+  }
+  if (ver >= 500 && BST_CHECKED == chkMonitor_.GetCheck()) {
+    cnf.monitor_mode = 1;
+  }
+  if (ver < 500) {
+    cnf.acc_mode = (BST_CHECKED == radioACCAverage_.GetCheck()) ? 0 : 1;
+    cnf.mem_mode = (BST_CHECKED == radioOverWrite_.GetCheck()) ? 0 : 1;
+  }
+  else {
+    cnf.acc_mode = 1;
+    cnf.mem_mode = 1;
+  }
+
+  int tempID;
+  if (!examineTempID(editTempID_, &tempID)) {
+    string msg("仮IDが間違っています");
+    MessageBox(msg.c_str());
+    staticStatus_.SetWindowText(msg.c_str());
+    return;
+  }
+  cnf.temp_id = tempID;
+
+  auto tp = chrono::system_clock::now();
+  time_t tt = chrono::system_clock::to_time_t(tp);
+  tm t;
+  localtime_s(&t, &tt);
+
+  if (!UTWSWHS1WriteConfig(hwhs_, &cnf, cnf.mem_mode,
+    t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec)) {
+    string msg("設定できませんでした");
+    errorMessage(hwhs_, &msg);
+    staticStatus_.SetWindowText(msg.c_str());
+    return;
+  }
+
+  staticStatus_.SetWindowText("設定を書き込みました");
+
+  return;
+}
+
+void CWHS1SampleDlg::OnBnClickedButtonMemory()
+{
+  using namespace std;
+
+  //フラッシュメモリに記録されたブロック数
+  UINT block_size;
+  if (!UTWSWHS1GetRecordedSize(hwhs_, &block_size)) {
+    string msg("フラッシュメモリに記録されたブロック数を取得できませんでした");
+    errorMessage(hwhs_, &msg);
+    staticStatus_.SetWindowText(msg.c_str());
+    return;
+  }
+  if (block_size == 0) {
+    string msg("WHS-1のフラッシュは空です");
+    errorMessage(hwhs_, &msg);
+    staticStatus_.SetWindowText(msg.c_str());
+    return;
+  }
+
+  //時刻補完を有効にする
+  BOOL time_adjust = TRUE;
+
+  WHS1MemDataHeader header;
+
+  if (FALSE == UTWSWHS1ReadMemoryEx(hwhs_, &header)) {
+    string msg("WHS-1からデータを読み出せません");
+    errorMessage(hwhs_, &msg);
+    staticStatus_.SetWindowText(msg.c_str());
+    return;
+  }
+  else if (0 == header.data_count) {
+    string msg("保存されたデータはありませんでした");
+    errorMessage(hwhs_, &msg);
+    staticStatus_.SetWindowText(msg.c_str());
+    return;
+  }
+
+  //呼び出し側メモリへデータをコピーする例
+  if (3 == header.ecg_mode && 0 == header.acc_mode) {
+    //加速度1秒更新かつピークホールド
+    vector<WHS1EcgDataEx> data(header.data_count);
+    if (!UTWSWHS1GetReceivedMemoryEx(hwhs_, &header, &data[0], data.size(), time_adjust)) {
+      string msg("DDL内ストアデータコピーに失敗しました．");
+      errorMessage(hwhs_, &msg);
+      staticStatus_.SetWindowText(msg.c_str());
+      return;
+    }
+  }
+  else {
+    vector<WHS1EcgData> data(header.data_count);
+    if (!UTWSWHS1GetReceivedMemory(hwhs_, &header, &data[0], data.size(), time_adjust)) {
+      string msg("DDL内ストアデータコピーに失敗しました．");
+      errorMessage(hwhs_, &msg);
+      staticStatus_.SetWindowText(msg.c_str());
+      return;
+    }
+  }
+
+  //ファイルへ保存
+  CFileDialog fdg(FALSE);
+  if (IDOK == fdg.DoModal()) {
+    if (!UTWSWHS1SaveReceivedMemory(hwhs_, static_cast<const char*>(fdg.GetPathName()), time_adjust)) {
+      string msg("ファイルの保存に失敗しました．");
+      errorMessage(hwhs_, &msg);
+      staticStatus_.SetWindowText(msg.c_str());
+      return;
+    }
+    else {
+      staticStatus_.SetWindowText("保存しました");
+    }
+  }
+  else {
+    staticStatus_.SetWindowText("");
+  }
+}
+
+void CWHS1SampleDlg::OnBnClickedButtonAsyncRead()
+{
+  using namespace std;
+
+  download_event_.ResetEvent();
+  if (!UTWSWHS1ReadMemoryBinary(hwhs_, download_event_, asynchronousReadCallback, this)) {
+    string msg("非同期読み出しを開始できません");
+    errorMessage(hwhs_, &msg);
+    staticStatus_.SetWindowText(msg.c_str());
+    return;
+  }
+  download_thread = thread(monitor, this);
+}
+
+void CWHS1SampleDlg::OnBnClickedButtonBintocsv()
+{
+  using namespace std;
+
+  HANDLE hbin = 0;
+  //時刻補完を有効にする
+  BOOL time_adjust = TRUE;
+  //バイナリデータへのハンドルを生成する
+  if (!(hbin = UTWSOpenDevice(UTWS_WHS_1_BINARYDATA, 0))) {
+    string msg("バイナリデータのハンドルを生成できませんでした");
+    errorMessage(0, &msg);
+    staticStatus_.SetWindowText(msg.c_str());
+    return;
+  }
+
+  //バイナリファイルの読み込み
+  //DLL内でデータに変換する
+  CFileDialog fdgr(TRUE);
+  if (IDOK == fdgr.DoModal()) {
+    string path = static_cast<const char*>(fdgr.GetPathName());
+    if (-1 == UTWSWHS1BinaryFileToData(hbin, path.c_str(), time_adjust, FALSE)) {
+      string msg("バイナリデータを読み込めませんでした");
+      errorMessage(hbin, &msg);
+      staticStatus_.SetWindowText(msg.c_str());
+      UTWSCloseDevice(hbin);
+      return;
+    }
+  }
+  else {
+    staticStatus_.SetWindowText("キャンセルされました");
+    return;
+  }
+  //CSVへ書き出す
+  CFileDialog fdg(FALSE);
+  if (IDOK == fdg.DoModal()) {
+    string path = static_cast<const char*>(fdg.GetPathName());
+    if (!UTWSWHS1SaveDataFromBinary(hbin, path.c_str())) {
+      string msg("CSVファイルを保存できませんでした");
+      errorMessage(hbin, &msg);
+      staticStatus_.SetWindowText(msg.c_str());
+      UTWSCloseDevice(hbin);
+      return;
+    }
+  }
+  else {
+    staticStatus_.SetWindowText("キャンセルされました");
+    return;
+  }
+
+  staticStatus_.SetWindowTextA("変換しました");
+  UTWSCloseDevice(hbin);
+}
+
+void CWHS1SampleDlg::OnBnClickedButtonSendAddres()
+{
+  using namespace std;
+
+  auto n = editDestinationAddress_.GetWindowTextLength();
+  vector<CHAR> buf(n + 1);
+  editDestinationAddress_.GetWindowText(&buf[0], buf.size());
+  if (!UTWSWHS1SetDestinationAddress(hwhs_, &buf[0])) {
+    string msg("宛先アドレスを設定できませんでした");
+    errorMessage(hwhs_, &msg);
+    staticStatus_.SetWindowText(msg.c_str());
+    return;
+  }
+
+  CHAR address[11];
+  if (!UTWSWHS1GetDestinationAddress(hwhs_, address)) {
+    string msg("WHS-1の宛先アドレスを取得できませんでした");
+    errorMessage(hwhs_, &msg);
+    staticStatus_.SetWindowText(msg.c_str());
+    return;
+  }
+  editDestinationAddress_.SetWindowText(address);
+
+  staticStatus_.SetWindowText("宛先アドレスを設定しました");
+}
+</file>
+
+<file path="WHS-1/Software Development Kit/WHS1Sample/WHS1SampleDlg.h">
+// WHS1SampleDlg.h : ヘッダー ファイル
+//
+
+#pragma once
+
+// CWHS1SampleDlg ダイアログ
+class CWHS1SampleDlg : public CDialog
+{
+  //全ダイアログアイテムを登録する
+  std::vector<CWnd*> items_;
+
+  // コンストラクション
+public:
+  CWHS1SampleDlg(CWnd* pParent = nullptr);	// 標準コンストラクター
+
+// ダイアログ データ
+#ifdef AFX_DESIGN_TIME
+  enum { IDD = IDD_WHS1SAMPLE_DIALOG };
+#endif
+
+protected:
+  virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV サポート
+
+// 実装
+protected:
+  HICON m_hIcon;
+
+  // 生成された、メッセージ割り当て関数
+  virtual BOOL OnInitDialog();
+  afx_msg void OnPaint();
+  afx_msg HCURSOR OnQueryDragIcon();
+  DECLARE_MESSAGE_MAP()
+public:
+  //WHS-1のハンドル
+  HANDLE hwhs_;
+  //非同期読み出しが完了したときにシグナル状態となるイベントオブジェクト
+  CEvent download_event_;
+  //設定情報の更新
+  void updateConfig();
+
+  CEdit editTempID_;
+  CButton radioRF_;
+  CButton radioMemory_;
+  CButton radioWave_;
+  CButton radioRRI_;
+  CButton radioHR_;
+  CButton chkUpdateWithBeat_;
+  CButton chkMonitor_;
+  CButton radioAccPeakHold_;
+  CButton radioACCAverage_;
+  CButton radioOverWrite_;
+  CButton radioMemoryStop_;
+  CEdit editFWVersion_;
+  CStatic staticTempOffset_;
+  CEdit editFlushWriteCount_;
+  CEdit editSerialNo_;
+  CEdit editCPUID_;
+  CEdit editBlockSize_;
+  CStatic staticStatus_;
+  CStatic groupACC_;
+  CStatic groupMemory_;
+  CStatic staticTime_;
+  CEdit editDestinationAddress_;
+  CEdit editTempOffset_;
+  afx_msg void OnClose();
+  afx_msg void OnBnClickedButtonRead();
+  afx_msg void OnBnClickedButtonWrite();
+  afx_msg void OnBnClickedButtonMemory();
+  afx_msg void OnBnClickedButtonAsyncRead();
+  afx_msg void OnBnClickedButtonBintocsv();
+  afx_msg void OnBnClickedButtonSendAddres();
+};
+</file>
+
+<file path="memo.md">
+## GitHubへの保存
+git add .
+git commit -m "コメント"
+git push
+
+## リモートのoriginの最新の変更を取得
+git fetch origin
+
+## origin/masterの状態に戻す（リモートのorigin/masterに戻したければ先にfetch origin）
+git reset --hard origin/master
+
+## 現在のブランチの確認
+git branch
+
+## ブランチの移動
+git checkout ブランチ名（またはコミットのハッシュ）
+
+## GitHubからのクローン
+git clone https://github.com/ユーザー名/リポジトリ名.git
+
+## デプロイ（Vercelで）
+
+## ローカルで起動
+npm run dev
+
+## prisma studio起動
+npx prisma studio
+
+## コードを1ファイルにまとめる
+npx repomix
+</file>
+
+<file path="vite.config.js">
+// vite.config.js
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+// 👇 GitHub Pages で使うための「公開先パス」を設定
+export default defineConfig({
+  base: '/heart-monitor-app/',
+  plugins: [react()],
+})
+</file>
+
 <file path="package.json">
 {
-  "name": "heart-monitor-demo",
+  "name": "heart-monitor-app",
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://ceis-kamiya.github.io/heart-monitor-demo",
+  "homepage": "https://ceis-kamiya.github.io/heart-monitor-app",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -359,18 +3353,6 @@ createRoot(document.getElementById('root')).render(
     "vite": "^6.2.0"
   }
 }
-</file>
-
-<file path="vite.config.js">
-// vite.config.js
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-
-// 👇 GitHub Pages で使うための「公開先パス」を設定
-export default defineConfig({
-  base: '/heart-monitor-app/',
-  plugins: [react()],
-})
 </file>
 
 <file path="src/memo.md">
@@ -401,7 +3383,7 @@ npm run dev
 <file path="src/App.jsx">
 import React, { useEffect, useState, useRef } from 'react';
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine
 } from 'recharts';
 
 const DISPLAY_SECONDS = 60;
@@ -502,7 +3484,9 @@ function App() {
   const xDomain = [startTime, startTime + DISPLAY_SECONDS];
   const displayData = data.filter(d => d.timeValue >= xDomain[0] && d.timeValue <= xDomain[1]);
   const sliderMin = data.length > 0 ? data[0].timeValue : 0;
-  const sliderMax = data.length > 0 ? data[data.length - 1].timeValue - DISPLAY_SECONDS : 0;
+  const sliderMax = data.length > 0
+    ? Math.max(sliderMin, data[data.length - 1].timeValue - DISPLAY_SECONDS)
+    : 0;
   const formatTime = (timeValue) => new Date(timeValue * 1000).toLocaleTimeString();
 
   // グラフに描画するアラートレンジ（1秒未満は描画しない）  
@@ -510,7 +3494,7 @@ function App() {
     const { start, end } = range;
     if (end - start < 1) return null;
     const alertData = data.filter(d => d.timeValue >= start && d.timeValue <= end &&
-                                         d.timeValue >= xDomain[0] && d.timeValue <= xDomain[1]);
+      d.timeValue >= xDomain[0] && d.timeValue <= xDomain[1]);
     return alertData.length > 1 ? (
       <Line
         key={`alert-hr-${idx}`}
@@ -532,7 +3516,7 @@ function App() {
     const { start, end } = range;
     if (end - start < 1) return null;
     const alertData = data.filter(d => d.timeValue >= start && d.timeValue <= end &&
-                                         d.timeValue >= xDomain[0] && d.timeValue <= xDomain[1]);
+      d.timeValue >= xDomain[0] && d.timeValue <= xDomain[1]);
     return alertData.length > 1 ? (
       <Line
         key={`alert-acc-${idx}`}
@@ -608,6 +3592,24 @@ function App() {
           />
           <YAxis yAxisId="left" domain={[30, 220]} />
           <YAxis yAxisId="right" orientation="right" domain={[0, 3]} />
+          <ReferenceLine
+            yAxisId="left"
+            y={hrThreshold}
+            stroke="#8884d8"
+            strokeDasharray="2 2"
+            label={{
+              value: `HR ≥ ${hrThreshold}  /  継続 ${duration}s`,
+              position: 'insideTopLeft',
+              fontSize: 10
+            }}
+          />
+          <ReferenceLine
+            yAxisId="right"
+            y={accThreshold}
+            stroke="#82ca9d"
+            strokeDasharray="2 2"
+            label={{ value: `Acc ≤ ${accThreshold}`, position: 'insideTopRight', fontSize: 10 }}
+          />
           <Tooltip content={() => null} cursor={false} />
           <Legend />
           <Line
