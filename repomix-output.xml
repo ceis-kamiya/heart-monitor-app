@@ -79,7 +79,7 @@ git reset --hard origin/master
 git branch
 
 ## ブランチの移動
-git chechout ブランチ名（またはコミットのハッシュ）
+git checkout ブランチ名（またはコミットのハッシュ）
 
 ## GitHubからのクローン
 git clone https://github.com/ユーザー名/リポジトリ名.git
